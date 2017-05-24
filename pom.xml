@@ -59,7 +59,7 @@
     <name>Elastic Search Connector</name>
     <version>1.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
-    <description>This is the custom module (Elastic Search Connector) for running on a Digital Experience Manager server.</description>
+    <description>This is the custom module (ElasticSearch Connector) for running on a Digital Experience Manager server.</description>
 
     <scm>
         <connection>scm:dummy:uri</connection>
@@ -210,7 +210,7 @@
                         <_dsannotations>*</_dsannotations>
                         <Jahia-Depends>default,serverSettings,database-connector</Jahia-Depends>
                         <Jahia-Module-Priority>3</Jahia-Module-Priority>
-                        <JAX-RS-Alias>/dbconn/mongo</JAX-RS-Alias>
+                        <JAX-RS-Alias>/dbconn/elasticsearch</JAX-RS-Alias>
                         <JAX-RS-Application>org.jahia.modules.elasticsearchConnectorConnector.api.ECApiApplication</JAX-RS-Application>
                         <Import-Package>
                             org.jahia.modules.databaseConnector.api.filters,

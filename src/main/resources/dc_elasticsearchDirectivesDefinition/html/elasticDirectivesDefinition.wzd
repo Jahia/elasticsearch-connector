@@ -1,0 +1,14 @@
+package dc_myDirectiveDefinition.html
+
+directives {
+    label "ElasticSearch directives"
+    databaseType "ELASTIC"
+    connectionDirective "<elasticsearch-connection-directive></elasticsearch-connection-directive>"
+    statusDirectives {
+        overview "<elasticsearch-overview></elasticsearch-overview>"
+        cpu "<elasticsearch-cpu></elasticsearch-cpu>"
+        memory "<elasticsearch-memory></elasticsearch-memory>"
+        network "<elasticsearch-network></elasticsearch-network>"
+        connections "<elasticsearch-available-connections></elasticsearch-available-connections>"
+    }
+}
