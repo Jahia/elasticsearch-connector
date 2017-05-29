@@ -1,4 +1,4 @@
-package org.jahia.modules.elasticsearchConnector.api;
+package org.jahia.modules.elasticsearchconnector.api;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import org.glassfish.jersey.filter.LoggingFilter;

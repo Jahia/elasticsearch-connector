@@ -1,17 +1,11 @@
-package org.jahia.modules.elasticsearchConnector.connection;
+package org.jahia.modules.elasticsearchconnector.connection;
 
-import org.apache.commons.lang.StringUtils;
-import org.bson.BsonDocument;
-import org.bson.BsonInt32;
 import org.jahia.modules.databaseConnector.connection.AbstractConnection;
 import org.jahia.modules.databaseConnector.connection.ConnectionData;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 
 /**
  * 2017-05-17
@@ -21,27 +15,18 @@ import java.util.List;
 
 public class ElasticSearchConnection extends AbstractConnection {
 
-//    public static final String NODE_TYPE = "dc:elasticsearchConnection";
-//    public static final String WRITE_CONCERN_KEY = "dc:writeConcern";
-//    public static final String AUTH_DB_KEY = "dc:authDb";
-//    public static final String WRITE_CONCERN_DEFAULT_VALUE = "ACKNOWLEDGED";
-//    public static final Integer DEFAULT_PORT = 27017;
-//
-//    private static final Logger logger = LoggerFactory.getLogger(ElasticSearchConnection.class);
-    public static final String DATABASE_TYPE = "ELASTIC";
-//    public static final String DISPLAY_NAME = "ElasticSearchDB";
-//    private static List WRITE_CONCERN_OPTIONS = null;
-//
-//    private ElasticSearchDatabase databaseConnection;
-//
-//   private ElasticSearchClient mongoClient;
-//
-//    private String writeConcern;
-//
-//    private String authDb;
+    public static final String NODE_TYPE = "ec:elasticsearchConnection";
+    public static final Integer DEFAULT_PORT = 9200;
+    private static final Logger logger = LoggerFactory.getLogger(ElasticSearchConnection.class);
+    public static final String DATABASE_TYPE = "ELASTICSEARCH";
+    public static final String DISPLAY_NAME = "ElasticSearchDB";
+
+    public ElasticSearchConnection(String id) {
+        this.id = id;
+    }
 
     @Override
-    protected Object beforeRegisterAsService() {
+    public Object beforeRegisterAsService() {
         return null;
     }
 
@@ -98,6 +83,26 @@ public class ElasticSearchConnection extends AbstractConnection {
 //        serverStatusCommand.append("repl", new BsonInt32(0));
 //
 //        return this.databaseConnection.runCommand(serverStatusCommand);
+    }
+
+    @Override
+    public Object establishConnection() {
+        return null;
+    }
+
+    @Override
+    public void forgetConnection() {
+
+    }
+
+    @Override
+    public Object getClient(String connectionId) {
+        return null;
+    }
+
+    @Override
+    public String getNodeType() {
+        return null;
     }
 
     @Override

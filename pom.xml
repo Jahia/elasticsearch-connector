@@ -223,7 +223,6 @@
                             *
                         </Import-Package>
                         <Export-Package>
-                            org.jahia.modules.elasticsearchConnector.connection
                         </Export-Package>
                     </instructions>
                 </configuration>

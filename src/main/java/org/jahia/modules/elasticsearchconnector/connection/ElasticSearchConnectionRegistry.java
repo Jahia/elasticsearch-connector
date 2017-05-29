@@ -1,11 +1,13 @@
-package org.jahia.modules.elasticsearchConnector.connection;
+package org.jahia.modules.elasticsearchconnector.connection;
 
 import org.jahia.modules.databaseConnector.connection.AbstractConnection;
 import org.jahia.modules.databaseConnector.connection.AbstractDatabaseConnectionRegistry;
 import org.jahia.modules.databaseConnector.connector.ConnectorMetaData;
+import org.jahia.services.content.JCRNodeWrapper;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.jcr.RepositoryException;
 import java.util.Map;
 
 /**
@@ -19,6 +21,16 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
     @Override
     public Map<String, ElasticSearchConnection> populateRegistry() {
         return null;
+    }
+
+    @Override
+    protected boolean beforeAddEditConnection(AbstractConnection connection, boolean isEdition) {
+        return false;
+    }
+
+    @Override
+    protected void storeAdvancedConfig(AbstractConnection connection, JCRNodeWrapper node) throws RepositoryException {
+
     }
 
     @Override
@@ -61,8 +73,4 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
         return null;
     }
 
-    @Override
-    public Object getDatabase(String connectionId) {
-        return null;
-    }
 }
