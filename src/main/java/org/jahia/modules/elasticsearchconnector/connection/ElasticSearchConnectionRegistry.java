@@ -96,7 +96,9 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
 
     @Override
     protected void storeAdvancedConfig(AbstractConnection connection, JCRNodeWrapper node) throws RepositoryException {
+        ElasticSearchConnection elasticSearchConnection = (ElasticSearchConnection) connection;
 
+        node.setProperty(ElasticSearchConnection.CLUSTER_NAME, elasticSearchConnection.getClusterName());
     }
 
     @Override

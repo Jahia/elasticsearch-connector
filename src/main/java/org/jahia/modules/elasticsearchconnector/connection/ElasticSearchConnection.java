@@ -73,7 +73,7 @@ public class ElasticSearchConnection extends AbstractConnection {
         settings = builder.build();
     }
 
-    private void addAdditionalTransportClients() {
+    private void addAdditionalTransportClients(ElasticSearchTransportClient estc) {
         //Add any additional transport addresses, that may be specified in advanced options
         if (!StringUtils.isEmpty(options)) {
             try {
@@ -89,7 +89,7 @@ public class ElasticSearchConnection extends AbstractConnection {
                         }
                         try {
                             if (host != null) {
-                                esTransportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), Integer.valueOf(port)));
+                                estc.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), Integer.valueOf(port)));
                             }
                         } catch (UnknownHostException ex) {
                             logger.warn("Unable to add additional transport address (" + host + ":" + port + ") for ElasticSearch connection with id: " + this.id + " " + ex.getMessage());
@@ -100,6 +100,19 @@ public class ElasticSearchConnection extends AbstractConnection {
                 logger.warn("Failed to parse options for ElasticSearch connection with id: " + this.id + " " + ex.getMessage());
             }
         }
+    }
+
+    private ElasticSearchTransportClient createTransportClient() {
+        prepareSettings();
+        ElasticSearchTransportClient estc = new ElasticSearchTransportClient(settings);
+        try {
+            estc.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), port != null ? port : DEFAULT_PORT));
+        } catch (UnknownHostException ex) {
+            logger.error("Failed to add transport address (" + host + ":" + port + ") for ElasticSearch connection with id: " + this.id + " " + ex.getMessage());
+        }
+        //Add any additional addresses that may be configured in the advanced settings.
+        addAdditionalTransportClients(estc);
+        return estc;
     }
 
     @Override
@@ -119,15 +132,7 @@ public class ElasticSearchConnection extends AbstractConnection {
 
     @Override
     public Object beforeRegisterAsService() {
-        prepareSettings();
-        esTransportClient = new ElasticSearchTransportClient(settings);
-        try {
-            esTransportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), port != null ? port : DEFAULT_PORT));
-        } catch (UnknownHostException ex) {
-            logger.error("Failed to add transport address (" + host + ":" + port + ") for ElasticSearch connection with id: " + this.id + " " + ex.getMessage());
-        }
-        //Add any additional addresses that may be configured in the advanced settings.
-        addAdditionalTransportClients();
+        esTransportClient = createTransportClient();
         return esTransportClient;
     }
 
@@ -140,8 +145,8 @@ public class ElasticSearchConnection extends AbstractConnection {
 
     @Override
     public boolean testConnectionCreation() {
-        //@TODO implement test connection functionality
-        return true;
+        ElasticSearchTransportClient estc = createTransportClient();
+        return estc.testConnection();
     }
 
     @Override
@@ -160,8 +165,13 @@ public class ElasticSearchConnection extends AbstractConnection {
 
     @Override
     public Object getServerStatus() {
-        //@TODO implement status retrieval
-        return null;
+        JSONObject status = null;
+        try {
+            esTransportClient.getStatus();
+        } catch(JSONException ex) {
+            logger.warn("Failed to create json status object for ElasticSearch connection with id: " + this.id + " " + ex.getMessage());
+        }
+        return status;
     }
 
     @Override
@@ -172,11 +182,6 @@ public class ElasticSearchConnection extends AbstractConnection {
     @Override
     public void forgetConnection() {
 
-    }
-
-    @Override
-    public Object getClient(String connectionId) {
-        return esTransportClient;
     }
 
     @Override
