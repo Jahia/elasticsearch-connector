@@ -13,8 +13,18 @@ import org.jahia.modules.databaseConnector.connection.ConnectionData;
 
 public class ElasticSearchConnectionData extends ConnectionData {
 
+    private String clusterName = null;
+
     public ElasticSearchConnectionData(String id) {
         this.id = id;
+    }
+
+    public String getClusterName() {
+        return clusterName;
+    }
+
+    public void setClusterName(String clusterName) {
+        this.clusterName = clusterName;
     }
 
     @JsonIgnore

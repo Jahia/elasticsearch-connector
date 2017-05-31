@@ -1,10 +1,19 @@
 package org.jahia.modules.elasticsearchconnector.connection;
 
+import org.apache.commons.lang.StringUtils;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.jahia.modules.databaseConnector.connection.AbstractConnection;
 import org.jahia.modules.databaseConnector.connection.ConnectionData;
+import org.jahia.modules.elasticsearchconnector.http.ElasticSearchTransportClient;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.LinkedHashMap;
 
 /**
@@ -16,38 +25,91 @@ import java.util.LinkedHashMap;
 public class ElasticSearchConnection extends AbstractConnection {
 
     public static final String NODE_TYPE = "ec:elasticsearchConnection";
-    public static final Integer DEFAULT_PORT = 9200;
+    public static final Integer DEFAULT_PORT = 9300;
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearchConnection.class);
+    public static final String CLUSTER_NAME = "ec:clusterName";
+
+    public static final String DEFAULT_CLUSTER_NAME = "elasticsearch";
+    public static final int DEFAULT_PING_TIMEOUT = 5;
+    public static final int DEFAULT_NODES_SAMPLER_INTERVAL = 5;
+    public static final boolean DEFAULT_IGNORE_CLUSTER_NAME = true;
+
     public static final String DATABASE_TYPE = "ELASTICSEARCH";
     public static final String DISPLAY_NAME = "ElasticSearchDB";
+
+    private ElasticSearchTransportClient esTransportClient = null;
+    private Settings settings = null;
+
+    private String clusterName = null;
+
 
     public ElasticSearchConnection(String id) {
         this.id = id;
     }
 
-    @Override
-    public Object beforeRegisterAsService() {
-        return null;
+    public String getClusterName() {
+        return clusterName;
     }
 
-    @Override
-    public void beforeUnregisterAsService() {
-
+    public void setClusterName(String clusterName) {
+        this.clusterName = clusterName;
     }
 
-    @Override
-    public boolean testConnectionCreation() {
-        return false;
+    private void prepareSettings() {
+        //Add any other settings here
+        Settings.Builder builder = Settings.builder();
+        builder.put("cluster.name", this.clusterName != null ? this.clusterName : DEFAULT_CLUSTER_NAME);
+
+        if (!StringUtils.isEmpty(options)) {
+            try {
+                JSONObject jsonOptions = new JSONObject(options);
+                builder.put("client.transport.ignore_cluster_name", jsonOptions.has("ignoreClusterName") ? jsonOptions.getBoolean("ignoreClusterName") : DEFAULT_IGNORE_CLUSTER_NAME);
+                builder.put("client.transport.ping_timeout", jsonOptions.has("pingTimeout") ? jsonOptions.getInt("pingTimeout") : DEFAULT_PING_TIMEOUT);
+                builder.put("client.transport.nodes_sampler_interval", jsonOptions.has("nodesSamplerInterval") ? jsonOptions.getInt("nodesSamplerInterval") : DEFAULT_NODES_SAMPLER_INTERVAL);
+            } catch (JSONException ex) {
+                logger.warn("Failed to parse options for ElasticSearch connection with id: " + this.id + " " + ex.getMessage());
+            }
+        }
+        settings = builder.build();
+    }
+
+    private void addAdditionalTransportClients() {
+        //Add any additional transport addresses, that may be specified in advanced options
+        if (!StringUtils.isEmpty(options)) {
+            try {
+                JSONObject jsonOptions = new JSONObject(options);
+                if (jsonOptions.has("additionalTransportAddresses")) {
+                    JSONArray transportAddressesHolder = jsonOptions.getJSONArray("additionalTransportAddresses");
+                    for (int i = 0; i < transportAddressesHolder.length(); i++) {
+                        JSONObject transportAddress = new JSONObject(transportAddressesHolder.get(i));
+                        String host = transportAddress.getString("host");
+                        String port = transportAddress.getString("port");
+                        if (StringUtils.isEmpty(port)) {
+                            port = String.valueOf(DEFAULT_PORT);
+                        }
+                        try {
+                            if (host != null) {
+                                esTransportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), Integer.valueOf(port)));
+                            }
+                        } catch (UnknownHostException ex) {
+                            logger.warn("Unable to add additional transport address (" + host + ":" + port + ") for ElasticSearch connection with id: " + this.id + " " + ex.getMessage());
+                        }
+                    }
+                }
+            } catch (JSONException ex) {
+                logger.warn("Failed to parse options for ElasticSearch connection with id: " + this.id + " " + ex.getMessage());
+            }
+        }
     }
 
     @Override
     public String getDatabaseType() {
-        return null;
+        return DATABASE_TYPE;
     }
 
     @Override
     public String getDisplayName() {
-        return null;
+        return DISPLAY_NAME;
     }
 
     @Override
@@ -56,33 +118,50 @@ public class ElasticSearchConnection extends AbstractConnection {
     }
 
     @Override
-    public ConnectionData makeConnectionData() {
-        return null;
+    public Object beforeRegisterAsService() {
+        prepareSettings();
+        esTransportClient = new ElasticSearchTransportClient(settings);
+        try {
+            esTransportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), port != null ? port : DEFAULT_PORT));
+        } catch (UnknownHostException ex) {
+            logger.error("Failed to add transport address (" + host + ":" + port + ") for ElasticSearch connection with id: " + this.id + " " + ex.getMessage());
+        }
+        //Add any additional addresses that may be configured in the advanced settings.
+        addAdditionalTransportClients();
+        return esTransportClient;
     }
 
     @Override
-    public Object getServerStatus() { return null;
-//        BsonDocument serverStatusCommand = new BsonDocument()
-//                .append("serverStatus", new BsonInt32(1))
-//                .append("metrics", new BsonInt32(1))
-//                .append("locks", new BsonInt32(0))
-//                .append("dbStats", new BsonInt32(1))
-//                .append("collStats", new BsonInt32(1));
-//        if (!StringUtils.isEmpty(options)) {
-//            try {
-//                JSONObject jsonOptions = new JSONObject(options);
-//                if (jsonOptions.has("repl")) {
-//                    serverStatusCommand.append("repl", new BsonInt32(1));
-//                    return this.databaseConnection.runCommand(serverStatusCommand);
-//                }
-//            } catch (JSONException ex) {
-//                logger.error("Failed to parse connection options json", ex.getMessage());
-//                return null;
-//            }
-//        }
-//        serverStatusCommand.append("repl", new BsonInt32(0));
-//
-//        return this.databaseConnection.runCommand(serverStatusCommand);
+    public void beforeUnregisterAsService() {
+        if (esTransportClient != null) {
+            esTransportClient.close();
+        }
+    }
+
+    @Override
+    public boolean testConnectionCreation() {
+        //@TODO implement test connection functionality
+        return true;
+    }
+
+    @Override
+    public ConnectionData makeConnectionData() {
+        ElasticSearchConnectionData elasticSearchConnectionData = new ElasticSearchConnectionData(id);
+        elasticSearchConnectionData.setHost(host);
+        elasticSearchConnectionData.setPort(port == null ? DEFAULT_PORT : port);
+        elasticSearchConnectionData.isConnected(isConnected);
+        elasticSearchConnectionData.setClusterName(clusterName == null ? DEFAULT_CLUSTER_NAME : clusterName);
+        elasticSearchConnectionData.setPassword(password);
+        elasticSearchConnectionData.setDatabaseType(DATABASE_TYPE);
+        elasticSearchConnectionData.setOptions(options);
+        elasticSearchConnectionData.setDisplayName(DISPLAY_NAME);
+        return elasticSearchConnectionData;
+    }
+
+    @Override
+    public Object getServerStatus() {
+        //@TODO implement status retrieval
+        return null;
     }
 
     @Override
@@ -97,16 +176,17 @@ public class ElasticSearchConnection extends AbstractConnection {
 
     @Override
     public Object getClient(String connectionId) {
-        return null;
+        return esTransportClient;
     }
 
     @Override
     public String getNodeType() {
-        return null;
+        return NODE_TYPE;
     }
 
     @Override
     public String parseOptions(LinkedHashMap options) {
+        //@TODO implement parsing options
         return null;
     }
 }

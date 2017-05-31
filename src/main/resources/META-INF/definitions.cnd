@@ -1,6 +1,8 @@
 <jnt = 'http://www.jahia.org/jahia/nt/1.0'>
 <jmix = 'http://www.jahia.org/jahia/mix/1.0'>
+<ec = 'http://www.jahia.org/jahia/ec/1.0'>
 
 [ec:elasticsearchConnection] > jnt:content, dcmix:databaseConnection
+ - ec:clusterName (String)
 
 [dc:elasticsearchDirectivesDefinition] > jnt:content, dcmix:directivesDefinition, mix:title, jmix:droppableContent, jmix:hiddenType

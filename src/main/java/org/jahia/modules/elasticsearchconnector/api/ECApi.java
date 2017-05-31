@@ -1,12 +1,15 @@
 package org.jahia.modules.elasticsearchconnector.api;
 
 import org.apache.commons.lang.StringUtils;
-import org.jahia.modules.databaseConnector.connection.DatabaseConnectionAPI;
 import org.jahia.modules.databaseConnector.services.DatabaseConnectorService;
+import org.jahia.modules.databaseConnector.util.Utils;
 import org.jahia.modules.elasticsearchconnector.connection.ElasticSearchConnection;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.osgi.framework.BundleContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,16 +24,21 @@ import java.util.Map;
  * @author Astrit Ademi
  */
 
-public class ECApi extends DatabaseConnectionAPI {
+@Component(service = ECApi.class, immediate = true)
+@Path("/dbconn/elasticsearch")
+@Produces({"application/hal+json"})
+public class ECApi {
     private static final Logger logger = LoggerFactory.getLogger(ECApi.class);
+    private BundleContext context;
     public final static String ENTRY_POINT = "/elasticsearch";
     private DatabaseConnectorService databaseConnectorService;
 
-
-    public ECApi(Class apiClass) {
-        super(apiClass);
-        databaseConnectorService = getDatabaseConnector();
+    @Activate
+    public void activate(BundleContext context) {
+        this.context = context;
+        this.databaseConnectorService = (DatabaseConnectorService) Utils.getService(DatabaseConnectorService.class, this.context);
     }
+
 
     @GET
     @Path("/test")
@@ -68,9 +76,6 @@ public class ECApi extends DatabaseConnectionAPI {
             if (!connectionParameters.has("host") || StringUtils.isEmpty(connectionParameters.getString("host"))) {
                 missingParameters.put("host");
             }
-            if (!connectionParameters.has("dbName") || StringUtils.isEmpty(connectionParameters.getString("dbName"))) {
-                missingParameters.put("dbName");
-            }
             if (missingParameters.length() > 0) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("{\"missingParameters\":" + missingParameters.toString() + "}").build();
             } else {
@@ -78,17 +83,13 @@ public class ECApi extends DatabaseConnectionAPI {
                 String host = connectionParameters.has("host") ? connectionParameters.getString("host") : null;
                 Integer port = connectionParameters.has("port") && !StringUtils.isEmpty(connectionParameters.getString("port")) ? connectionParameters.getInt("port") : null;
                 Boolean isConnected = connectionParameters.has("isConnected") && connectionParameters.getBoolean("isConnected");
-                String dbName = connectionParameters.has("dbName") ? connectionParameters.getString("dbName") : null;
-                String user = connectionParameters.has("user") ? connectionParameters.getString("user") : null;
-                String password = connectionParameters.has("password") ? connectionParameters.getString("password") : null;
+                String clusterName = connectionParameters.has("clusterName") ? connectionParameters.getString("clusterName") : null;
                 String options = connectionParameters.has("options") ? connectionParameters.getString("options") : null;
                 ElasticSearchConnection connection = new ElasticSearchConnection(id);
                 connection.setHost(host);
                 connection.setPort(port);
                 connection.isConnected(isConnected);
-                connection.setDbName(dbName);
-                connection.setUser(user);
-                connection.setPassword(password);
+                connection.setClusterName(clusterName);
                 connection.setOptions(options);
                 JSONObject jsonAnswer = new JSONObject();
                 if (!databaseConnectorService.testConnection(connection)) {
@@ -142,7 +143,7 @@ public class ECApi extends DatabaseConnectionAPI {
                 String host = connectionParameters.has("host") ? connectionParameters.getString("host") : null;
                 Integer port = connectionParameters.has("port") && !StringUtils.isEmpty(connectionParameters.getString("port")) ? connectionParameters.getInt("port") : null;
                 Boolean isConnected = connectionParameters.has("isConnected") && connectionParameters.getBoolean("isConnected");
-                String dbName = connectionParameters.has("dbName") ? connectionParameters.getString("dbName") : null;
+                String clusterName = connectionParameters.has("clusterName") ? connectionParameters.getString("clusterName") : null;
                 String password = connectionParameters.has("password") ? connectionParameters.getString("password") : null;
                 String options = connectionParameters.has("options") ? connectionParameters.getString("options") : null;
 
@@ -152,8 +153,7 @@ public class ECApi extends DatabaseConnectionAPI {
                 connection.setHost(host);
                 connection.setPort(port);
                 connection.isConnected(isConnected);
-                connection.setDbName(dbName);
-                connection.setPassword(password);
+                connection.setClusterName(clusterName);
                 connection.setOptions(options);
 
                 JSONObject jsonAnswer = new JSONObject();
@@ -241,8 +241,7 @@ public class ECApi extends DatabaseConnectionAPI {
                 String host = connectionParameters.has("host") ? connectionParameters.getString("host") : null;
                 Integer port = connectionParameters.has("port") && !StringUtils.isEmpty(connectionParameters.getString("port")) ? connectionParameters.getInt("port") : null;
                 Boolean isConnected = connectionParameters.has("isConnected") && connectionParameters.getBoolean("isConnected");
-                String dbName = connectionParameters.has("dbName") ? connectionParameters.getString("dbName") : null;
-                String password = connectionParameters.has("password") ? connectionParameters.getString("password") : null;
+                String clusterName = connectionParameters.has("clusterName") ? connectionParameters.getString("clusterName") : null;
                 String options = connectionParameters.has("options") ? connectionParameters.getString("options") : null;
 
                 ElasticSearchConnection connection = new ElasticSearchConnection(id);
@@ -250,8 +249,7 @@ public class ECApi extends DatabaseConnectionAPI {
                 connection.setHost(host);
                 connection.setPort(port);
                 connection.isConnected(isConnected);
-                connection.setDbName(dbName);
-                connection.setPassword(password);
+                connection.setClusterName(clusterName);
                 connection.setOptions(options);
 
                 boolean connectionTestPassed = databaseConnectorService.testConnection(connection);
