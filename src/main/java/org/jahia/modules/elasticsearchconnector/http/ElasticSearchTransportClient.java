@@ -6,6 +6,7 @@ import org.elasticsearch.client.transport.NoNodeAvailableException;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.jahia.modules.databaseConnector.services.ConnectionService;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -14,7 +15,7 @@ import java.util.Arrays;
 /**
  * Created by stefan on 2017-05-30.
  */
-public class ElasticSearchTransportClient extends PreBuiltTransportClient implements TransportClientService {
+public class ElasticSearchTransportClient extends PreBuiltTransportClient implements TransportClientService, ConnectionService {
 
     public ElasticSearchTransportClient(Settings settings, Class<? extends Plugin>... plugins) {
         super(settings, Arrays.asList(plugins));
@@ -43,5 +44,10 @@ public class ElasticSearchTransportClient extends PreBuiltTransportClient implem
         }
 
         return connectionValid;
+    }
+
+    @Override
+    public Object getClient() {
+        return this;
     }
 }

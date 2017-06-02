@@ -3,8 +3,7 @@ package org.jahia.modules.elasticsearchconnector.connection;
 import org.apache.commons.lang.StringUtils;
 import org.jahia.modules.databaseConnector.connection.AbstractConnection;
 import org.jahia.modules.databaseConnector.connection.AbstractDatabaseConnectionRegistry;
-import org.jahia.modules.databaseConnector.connection.DatabaseConnectionRegistry;
-import org.jahia.modules.databaseConnector.connector.ConnectorMetaData;
+import org.jahia.modules.databaseConnector.services.DatabaseConnectionRegistry;
 import org.jahia.modules.databaseConnector.services.DatabaseConnectorService;
 import org.jahia.modules.databaseConnector.util.Utils;
 import org.jahia.modules.elasticsearchconnector.api.ECApi;
@@ -47,6 +46,11 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
         this.context = context;
         this.setConnectorProperties(this.context.getBundle().getSymbolicName(), ElasticSearchConnectionRegistry.class.getName());
         this.populateRegistry();
+    }
+
+    @Deactivate
+    public void deactivate(BundleContext context) {
+        this.closeConnections();
     }
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY, policy = ReferencePolicy.STATIC, service = DatabaseConnectorService.class)

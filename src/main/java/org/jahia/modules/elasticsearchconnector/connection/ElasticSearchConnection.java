@@ -145,8 +145,15 @@ public class ElasticSearchConnection extends AbstractConnection {
 
     @Override
     public boolean testConnectionCreation() {
-        ElasticSearchTransportClient estc = createTransportClient();
-        return estc.testConnection();
+        ElasticSearchTransportClient estc = null;
+        try {
+            estc = createTransportClient();
+            return estc.testConnection();
+        } finally {
+            if (estc != null) {
+                estc.close();
+            }
+        }
     }
 
     @Override
@@ -172,16 +179,6 @@ public class ElasticSearchConnection extends AbstractConnection {
             logger.warn("Failed to create json status object for ElasticSearch connection with id: " + this.id + " " + ex.getMessage());
         }
         return status;
-    }
-
-    @Override
-    public Object establishConnection() {
-        return null;
-    }
-
-    @Override
-    public void forgetConnection() {
-
     }
 
     @Override

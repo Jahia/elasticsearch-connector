@@ -1,15 +1,12 @@
 package org.jahia.modules.elasticsearchconnector.api;
 
 import org.apache.commons.lang.StringUtils;
+import org.jahia.modules.databaseConnector.connection.DatabaseConnectionAPI;
 import org.jahia.modules.databaseConnector.services.DatabaseConnectorService;
-import org.jahia.modules.databaseConnector.util.Utils;
 import org.jahia.modules.elasticsearchconnector.connection.ElasticSearchConnection;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.osgi.framework.BundleContext;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,19 +21,16 @@ import java.util.Map;
  * @author Astrit Ademi
  */
 
-@Component(service = ECApi.class, immediate = true)
 @Path("/dbconn/elasticsearch")
 @Produces({"application/hal+json"})
-public class ECApi {
+public class ECApi extends DatabaseConnectionAPI {
     private static final Logger logger = LoggerFactory.getLogger(ECApi.class);
-    private BundleContext context;
     public final static String ENTRY_POINT = "/elasticsearch";
-    private DatabaseConnectorService databaseConnectorService;
+    private final DatabaseConnectorService databaseConnectorService;
 
-    @Activate
-    public void activate(BundleContext context) {
-        this.context = context;
-        this.databaseConnectorService = (DatabaseConnectorService) Utils.getService(DatabaseConnectorService.class, this.context);
+    public ECApi() {
+        super(ECApi.class);
+        this.databaseConnectorService = (DatabaseConnectorService) getDatabaseConnector();
     }
 
 
