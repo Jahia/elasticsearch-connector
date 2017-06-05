@@ -2,7 +2,7 @@ package dc_myDirectiveDefinition.html
 
 directives {
     label "Elasticsearch directives"
-    databaseType "ELASTIC"
+    databaseType "ELASTICSEARCH"
     connectionDirective "<elasticsearch-connection-directive></elasticsearch-connection-directive>"
     statusDirectives {
         overview "<elasticsearch-overview></elasticsearch-overview>"
