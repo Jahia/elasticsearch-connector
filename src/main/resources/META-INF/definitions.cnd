@@ -5,4 +5,4 @@
 [ec:elasticsearchConnection] > jnt:content, dcmix:databaseConnection
  - ec:clusterName (String)
 
-[dc:elasticsearchDirectivesDefinition] > jnt:content, dcmix:directivesDefinition, mix:title, jmix:droppableContent, jmix:hiddenType
+[ec:elasticsearchDirectivesDefinition] > jnt:content, dcmix:directivesDefinition, mix:title, jmix:droppableContent, jmix:hiddenType

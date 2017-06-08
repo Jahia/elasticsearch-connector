@@ -1,4 +1,4 @@
-package dc_myDirectiveDefinition.html
+package ec_elasticsearchDirectivesDefinition.html
 
 directives {
     label "Elasticsearch directives"
