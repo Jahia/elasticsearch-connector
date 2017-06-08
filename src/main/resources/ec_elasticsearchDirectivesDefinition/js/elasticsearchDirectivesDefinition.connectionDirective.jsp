@@ -65,9 +65,15 @@
                 'md-maxlength': i18n.format('dc_databaseConnector.label.validation.minLength', '30')
             },
             user: {
-                'pattern': i18n.message('dc_databaseConnector.label.validation.elasticsearch.user'),
+                'required': i18n.message('dc_databaseConnector.label.validation.required'),
+                'pattern': i18n.message('ec_elasticsearchConnector.label.validation.elasticsearch.user'),
                 'minlength': i18n.format('dc_databaseConnector.label.validation.minLength', '4'),
-                'md-maxlength': i18n.format('dc_databaseConnector.label.validation.minLength', '30')
+                'md-maxlength': i18n.format('dc_databaseConnector.label.validation.maxLength', '30')
+            },
+            password: {
+                'required': i18n.message('dc_databaseConnector.label.validation.required'),
+                'minlength': i18n.format('dc_databaseConnector.label.validation.minLength', '4'),
+                'md-maxlength': i18n.format('dc_databaseConnector.label.validation.maxLength', '30')
             },
             transportAddress: {
                 host: {
