@@ -290,7 +290,7 @@
                             *
                         </Import-Package>
                         <Export-Package>
-                            org.elasticsearch.*
+                            org.elasticsearch.*,
                             org.jahia.modules.elasticsearchconnector.http
                         </Export-Package>
                     </instructions>
