@@ -291,7 +291,8 @@
                         </Import-Package>
                         <Export-Package>
                             org.elasticsearch.*,
-                            org.jahia.modules.elasticsearchconnector.http
+                            org.jahia.modules.elasticsearchconnector.http,
+                            org.jahia.modules.elasticsearchconnector.connection
                         </Export-Package>
                     </instructions>
                 </configuration>
