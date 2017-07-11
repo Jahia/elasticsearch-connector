@@ -291,6 +291,7 @@
                         </Import-Package>
                         <Export-Package>
                             org.elasticsearch.*,
+                            org.apache.lucene.search.join.*,
                             org.jahia.modules.elasticsearchconnector.http,
                             org.jahia.modules.elasticsearchconnector.connection
                         </Export-Package>
