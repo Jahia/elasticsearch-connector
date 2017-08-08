@@ -1,0 +1,1 @@
+<div google-chart chart="cmuc.memoryUsageChart" style="height:{{cmuc.getHeight()}}; width:{{cmuc.getWidth()}};"></div>

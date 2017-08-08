@@ -1,5 +1,6 @@
 package org.jahia.modules.elasticsearchconnector.connection;
 
+import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
@@ -172,13 +173,8 @@ public class ElasticSearchConnection extends AbstractConnection {
 
     @Override
     public Object getServerStatus() {
-        JSONObject status = null;
-        try {
-            esTransportClient.getStatus();
-        } catch(JSONException ex) {
-            logger.warn("Failed to create json status object for ElasticSearch connection with id: " + this.id + " " + ex.getMessage());
-        }
-        return status;
+        Gson gson = new Gson();
+        return gson.toJson(esTransportClient.admin().cluster().prepareClusterStats().get());
     }
 
     @Override
