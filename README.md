@@ -2,7 +2,7 @@
 
 This connector is intended for use with database connector.
 
-##Usage 
+## Usage 
 
 To use you need to have elasticsearch running with transport tcp enabled at port 9300. To enable it you need to add 
 
@@ -22,7 +22,7 @@ adding connection you can see two displayed in this case simply refresh the page
 
 2. Import elasticsearch connector registry <osgi:reference id="esRegistry" interface="org.jahia.modules.elasticsearchconnector.connection.ElasticSearchConnectionRegistry" />
 
-3. Use registry to get your connection (ElasticSearchTransportClient) esConnection.getConnectionService(ElasticSearchConnection.DATABASE_TYPE, "yourConnectionName")
+3. Use registry to get your connection (ElasticSearchTransportClient) esRegistry.getConnectionService(ElasticSearchConnection.DATABASE_TYPE, "yourConnectionName")
 
 
  

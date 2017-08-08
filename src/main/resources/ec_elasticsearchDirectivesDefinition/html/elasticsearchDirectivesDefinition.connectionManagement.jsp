@@ -22,7 +22,7 @@
                     </md-button>
                     <md-input-container class="md-block" flex-gt-sm="1">
                         <label message-key="ec_elasticsearchConnector.label.host"></label>
-                        <input title="host" required ng-minlength="4" md-maxlength="15" name="host"
+                        <input title="host" required ng-minlength="4" name="host"
                                ng-model="cecc.connection.host">
                         <div ng-messages="elasticsearchForm.host.$error">
                             <div ng-message-exp="validationName"
