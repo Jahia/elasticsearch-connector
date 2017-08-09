@@ -15,7 +15,8 @@
             bindToController: {
                 mode: '@',
                 connection: '=',
-                databaseType: '@'
+                databaseType: '@',
+                closeDialog: '&'
             },
             link: linkFunc
         };
@@ -189,8 +190,8 @@
                 data: data
             }).then(function (response) {
                 cecc.spinnerOptions.showSpinner = false;
-                $scope.$emit('connectionSuccessfullyCreated', null);
                 showConfirmationToast(response.connectionVerified);
+                $scope.closeDialog('hide');
             }, function (response) {
                 cecc.spinnerOptions.showSpinner = false;
                 console.log('error', response);
@@ -248,8 +249,8 @@
             if (cecc.mode === 'import-edit') {
                 $scope.$emit('importConnectionClosed', null);
             } else {
-                $scope.$emit('creationCancelled', null);
                 $DCSS.selectedDatabaseType = null;
+                $scope.closeDialog('cancel');
                 //@TODO reset display of currently selected directive.
             }
         }
