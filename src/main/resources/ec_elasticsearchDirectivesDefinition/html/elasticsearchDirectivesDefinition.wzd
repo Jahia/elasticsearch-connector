@@ -8,7 +8,5 @@ directives {
         overview "<elasticsearch-overview></elasticsearch-overview>"
         cpu "<elasticsearch-cpu></elasticsearch-cpu>"
         memory "<elasticsearch-memory></elasticsearch-memory>"
-        network "<elasticsearch-network></elasticsearch-network>"
-        connections "<elasticsearch-available-connections></elasticsearch-available-connections>"
     }
 }

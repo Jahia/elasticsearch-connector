@@ -22,7 +22,9 @@
                 <dt message-key="ec_elasticsearchConnector.label.statistics.nodesNumber"></dt>
                 <dd>{{egsc.connectionStatus.nodes.length}}</dd>
                 <dt message-key="ec_elasticsearchConnector.label.statistics.storeSize"></dt>
-                <dd>{{(egsc.connectionStatus.indicesStats.store.sizeInBytes / (1000 * 1000)).toFixed(2)}} MB</dd>
+                <dd>{{(egsc.connectionStatus.indicesStats.store.sizeInBytes / (1024 * 1024)).toFixed(2)}} MB</dd>
+                <dt message-key="ec_elasticsearchConnector.label.statistics.maxHeap"></dt>
+                <dd>{{(egsc.connectionStatus.nodesStats.jvm.heapMax / (1024 * 1024)).toFixed(2)}} MB</dd>
             </dl>
         </div>
     </div>

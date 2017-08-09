@@ -88,8 +88,7 @@
                                 p       : {}
                             }
                         ],
-                        rows: [
-                        ]
+                        rows: []
                     },
                     options: {
                         title               : i18n.message('ec_elasticsearchMemory.label.heapUsage'),
@@ -97,6 +96,9 @@
                         fill                : 20,
                         displayExactValues  : true,
                         pointSize: cmuc.pointSize,
+                        hAxis               : {
+                            scaleType: "log"
+                        },
                         vAxis               : {
                             title: i18n.message('dc_databaseConnector.label.megabytes'),
                             gridlines: {
@@ -109,7 +111,7 @@
 
             function updateChartEntries(connectionStatus) {
                 var clusterStats = JSON.parse(connectionStatus);
-                var heapUsed = clusterStats.nodesStats.jvm.heapUsed / (1000 * 1000);
+                var heapUsed = clusterStats.nodesStats.jvm.heapUsed / (1024 * 1024);
                 heapUsed = heapUsed.toFixed(2);
                 var entry = angular.copy(CHART_ENTRY_TEMPLATE);
                 entry.c[0].v = moment(connectionStatus.localTime).format('HH:mm:ss').toString();
