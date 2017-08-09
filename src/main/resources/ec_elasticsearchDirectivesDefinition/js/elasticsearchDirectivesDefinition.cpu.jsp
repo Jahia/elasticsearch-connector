@@ -109,11 +109,11 @@
             function updateChartEntries(connectionStatus) {
                 var cpu = connectionStatus.nodesStats.process.cpuPercent;
                 var entry = angular.copy(CHART_ENTRY_TEMPLATE);
-                entry.c[0].v = moment(connectionStatus.localTime).format('HH:mm:ss').toString();
+                <%--entry.c[0].v = moment(connectionStatus.localTime).format('HH:mm:ss').toString();--%>
                 entry.c[1].v = cpu;
                 entry.c[1].f = cpu + ' %';
 
-                if (ccuc.memoryUsageChart.data.rows.length === 20) {
+                if (ccuc.memoryUsageChart.data.rows.length === 100) {
                     ccuc.memoryUsageChart.data.rows.shift();
                 }
                 ccuc.memoryUsageChart.data.rows.push(entry);

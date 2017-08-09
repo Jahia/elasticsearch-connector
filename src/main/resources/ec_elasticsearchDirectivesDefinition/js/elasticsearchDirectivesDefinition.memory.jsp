@@ -113,11 +113,11 @@
                 var heapUsed = connectionStatus.nodesStats.jvm.heapUsed / (1024 * 1024);
                 heapUsed = heapUsed.toFixed(2);
                 var entry = angular.copy(CHART_ENTRY_TEMPLATE);
-                entry.c[0].v = moment(connectionStatus.localTime).format('HH:mm:ss').toString();
+                <%--entry.c[0].v = moment(connectionStatus.localTime).format('HH:mm:ss').toString();--%>
                 entry.c[1].v = heapUsed;
                 entry.c[1].f = heapUsed + ' MB';
 
-                if (cmuc.memoryUsageChart.data.rows.length === 20) {
+                if (cmuc.memoryUsageChart.data.rows.length === 100) {
                     cmuc.memoryUsageChart.data.rows.shift();
                 }
                 cmuc.memoryUsageChart.data.rows.push(entry);
