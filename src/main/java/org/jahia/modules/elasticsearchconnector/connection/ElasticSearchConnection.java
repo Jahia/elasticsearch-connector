@@ -8,6 +8,7 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.jahia.modules.databaseConnector.connection.AbstractConnection;
 import org.jahia.modules.databaseConnector.connection.ConnectionData;
 import org.jahia.modules.elasticsearchconnector.http.ElasticSearchTransportClient;
+import org.jahia.utils.EncryptionUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -17,6 +18,10 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.LinkedHashMap;
+
+import static org.jahia.modules.databaseConnector.util.Utils.DOUBLE_QUOTE;
+import static org.jahia.modules.databaseConnector.util.Utils.NEW_LINE;
+import static org.jahia.modules.databaseConnector.util.Utils.TABU;
 
 /**
  * 2017-05-17
@@ -129,7 +134,16 @@ public class ElasticSearchConnection extends AbstractConnection {
 
     @Override
     public String getSerializedExportData() {
-        return null;
+        StringBuilder serializedString = new StringBuilder();
+        serializedString.append(TABU).append("type ").append(DOUBLE_QUOTE).append(DATABASE_TYPE).append(DOUBLE_QUOTE).append(NEW_LINE);
+        serializedString.append(TABU).append("host ").append(DOUBLE_QUOTE).append(this.host).append(DOUBLE_QUOTE).append(NEW_LINE);
+        serializedString.append(TABU).append("identifier ").append(DOUBLE_QUOTE).append(this.id).append(DOUBLE_QUOTE).append(NEW_LINE);
+        serializedString.append(TABU).append("isConnected ").append(DOUBLE_QUOTE).append(this.isConnected()).append(DOUBLE_QUOTE).append(NEW_LINE);
+        serializedString.append(TABU + "port " + DOUBLE_QUOTE).append(this.port != null ? this.port : DEFAULT_PORT).append(DOUBLE_QUOTE).append(NEW_LINE);
+
+        //TODO add advanced options
+
+        return serializedString.toString();
     }
 
     @Override
