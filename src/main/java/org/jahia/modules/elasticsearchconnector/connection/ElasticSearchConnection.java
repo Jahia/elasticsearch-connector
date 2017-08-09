@@ -1,6 +1,7 @@
 package org.jahia.modules.elasticsearchconnector.connection;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
@@ -174,7 +175,20 @@ public class ElasticSearchConnection extends AbstractConnection {
     @Override
     public Object getServerStatus() {
         Gson gson = new Gson();
-        return gson.toJson(esTransportClient.admin().cluster().prepareClusterStats().get());
+        JSONObject obj = null;
+        try {
+            obj = new JSONObject(gson.toJson(esTransportClient.admin().cluster().prepareClusterStats().get()));
+            JSONObject aboutConnection = new JSONObject();
+            aboutConnection.put("host", this.host);
+            aboutConnection.put("port", this.port);
+            aboutConnection.put("dbname", this.dbName);
+            aboutConnection.put("id", this.id);
+            aboutConnection.put("uri", this.uri);
+            obj.put("aboutConnection", aboutConnection);
+        } catch (JSONException e) {
+            logger.error("Failed to parse connection statistics to response");
+        }
+        return obj.toString();
     }
 
     @Override
