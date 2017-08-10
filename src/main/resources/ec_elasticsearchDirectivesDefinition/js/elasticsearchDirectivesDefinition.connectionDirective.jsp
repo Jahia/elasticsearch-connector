@@ -33,7 +33,7 @@
         .directive('elasticsearchConnectionDirective', ['$log', 'contextualData', 'dcTemplateResolver', elasticsearchConnectionDirective]);
 
     var ElasticsearchConnectionDirectiveController = function ($scope, contextualData,
-                                                       dcDataFactory, toaster, i18n, $DCSS) {
+                                                       dcDataFactory, toaster, i18n, $DCSS, $mdDialog) {
         var cecc = this;
 
         cecc.isEmpty = {};
@@ -162,7 +162,6 @@
 
                 cecc.spinnerOptions.showSpinner = false;
                 $scope.$emit('connectionSuccessfullyCreated', null);
-                console.log($DCSS);
                 var con = angular.copy(cecc.connection);
                 con.databaseType = "ELASTICSEARCH";
                 if ($DCSS.state.connections === null) {
@@ -171,6 +170,7 @@
                 else {
                     $DCSS.state.connections.push(con);
                 }
+                $mdDialog.hide();
                 showConfirmationToast(response.connectionVerified);
             }, function (response) {
                 cecc.spinnerOptions.showSpinner = false;
@@ -368,6 +368,6 @@
     };
 
     ElasticsearchConnectionDirectiveController.$inject = ['$scope', 'contextualData',
-        'dcDataFactory', 'toaster', 'i18nService', '$DCStateService'];
+        'dcDataFactory', 'toaster', 'i18nService', '$DCStateService', '$mdDialog'];
 
 })();
