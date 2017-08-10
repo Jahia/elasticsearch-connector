@@ -85,10 +85,10 @@
                 }
             },
             pingTimeout: {
-                'pattern' : i18n.message('dc_databaseConnector.label.validation.integer')
+                'pattern' : i18n.message('ec_elasticsearchConnector.label.validation.withUnit')
             },
             nodesSamplerInterval: {
-                'pattern' : i18n.message('dc_databaseConnector.label.validation.integer')
+                'pattern' : i18n.message('ec_elasticsearchConnector.label.validation.withUnit')
             }
         };
 
@@ -127,6 +127,10 @@
                 cecc.connection.options = {};
             } else if (_.isString(cecc.connection.options)){
                 cecc.connection.options = JSON.parse(cecc.connection.options);
+            }
+
+            if (cecc.connection.options.additionalTransportAddresses) {
+                cecc.enableAdditionalTransportAddresses = true;
             }
         };
 

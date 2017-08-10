@@ -83,45 +83,45 @@
             <md-content class="md-padding">
                 <form name="elasticsearchAdvancedForm">
                     <!-- ***START*  XPACK SECURITY OPTIONS -->
-                    <md-subheader class=" md-no-sticky">
-                        <span message-key="ec_elasticsearchConnector.label.modal.elasticsearch.useXPackSecurity"></span>
-                        <md-checkbox class="pull-right"
-                                     ng-model="cecc.connection.options.useXPackSecurity"
-                                     ng-true-value="true"
-                                     ng-false-value="false"
-                                     ng-change="cecc.updateXPackSecurity()">
-                        </md-checkbox>
-                    </md-subheader>
-                    <md-input-container class="md-block col-md-offset-2" ng-if="cecc.connection.options.useXPackSecurity">
-                        <label message-key="ec_elasticsearchConnector.label.user"></label>
-                        <input title="User" name="user" required ng-minlength="4" md-maxlength="30"
-                               ng-model="cecc.connection.user"
-                               ng-pattern="/^[a-zA-Z0-9_-]*$/"
-                               ng-change="cecc.updateIsEmpty('user');">
-                        <div ng-messages="elasticsearchAdvancedForm.user.$error">
-                            <div ng-message-exp="validationName"
-                                 ng-repeat="(validationName, validationMessage) in cecc.validations.user"
-                                 ng-class="{'showErrorMessages': elasticsearchAdvancedForm.user.$invalid && elasticsearchAdvancedForm.user.$touched}">
-                                {{validationMessage}}
-                            </div>
-                        </div>
-                    </md-input-container>
+                    <%--<md-subheader class=" md-no-sticky">--%>
+                        <%--<span message-key="ec_elasticsearchConnector.label.modal.elasticsearch.useXPackSecurity"></span>--%>
+                        <%--<md-checkbox class="pull-right"--%>
+                                     <%--ng-model="cecc.connection.options.useXPackSecurity"--%>
+                                     <%--ng-true-value="true"--%>
+                                     <%--ng-false-value="false"--%>
+                                     <%--ng-change="cecc.updateXPackSecurity()">--%>
+                        <%--</md-checkbox>--%>
+                    <%--</md-subheader>--%>
+                    <%--<md-input-container class="md-block col-md-offset-2" ng-if="cecc.connection.options.useXPackSecurity">--%>
+                        <%--<label message-key="ec_elasticsearchConnector.label.user"></label>--%>
+                        <%--<input title="User" name="user" required ng-minlength="4" md-maxlength="30"--%>
+                               <%--ng-model="cecc.connection.user"--%>
+                               <%--ng-pattern="/^[a-zA-Z0-9_-]*$/"--%>
+                               <%--ng-change="cecc.updateIsEmpty('user');">--%>
+                        <%--<div ng-messages="elasticsearchAdvancedForm.user.$error">--%>
+                            <%--<div ng-message-exp="validationName"--%>
+                                 <%--ng-repeat="(validationName, validationMessage) in cecc.validations.user"--%>
+                                 <%--ng-class="{'showErrorMessages': elasticsearchAdvancedForm.user.$invalid && elasticsearchAdvancedForm.user.$touched}">--%>
+                                <%--{{validationMessage}}--%>
+                            <%--</div>--%>
+                        <%--</div>--%>
+                    <%--</md-input-container>--%>
 
-                    <md-input-container class="md-block col-md-offset-2" ng-if="!cecc.isEmpty.user && cecc.connection.options.useXPackSecurity">
-                        <label message-key="ec_elasticsearchConnector.label.password"></label>
-                        <input title="Password" type="password" name="password" ng-model="cecc.connection.password"
-                               required ng-minlength="4" md-maxlength="30"
-                               ng-change="cecc.updateIsEmpty('password');">
-                        <div ng-messages="elasticsearchAdvancedForm.password.$error">
-                            <div ng-message-exp="validationName"
-                                 ng-repeat="(validationName, validationMessage) in cecc.validations.password"
-                                 ng-class="{'showErrorMessages': elasticsearchAdvancedForm.password.$invalid && elasticsearchAdvancedForm.password.$touched}">
-                                {{validationMessage}}
-                            </div>
-                        </div>
-                    </md-input-container>
+                    <%--<md-input-container class="md-block col-md-offset-2" ng-if="!cecc.isEmpty.user && cecc.connection.options.useXPackSecurity">--%>
+                        <%--<label message-key="ec_elasticsearchConnector.label.password"></label>--%>
+                        <%--<input title="Password" type="password" name="password" ng-model="cecc.connection.password"--%>
+                               <%--required ng-minlength="4" md-maxlength="30"--%>
+                               <%--ng-change="cecc.updateIsEmpty('password');">--%>
+                        <%--<div ng-messages="elasticsearchAdvancedForm.password.$error">--%>
+                            <%--<div ng-message-exp="validationName"--%>
+                                 <%--ng-repeat="(validationName, validationMessage) in cecc.validations.password"--%>
+                                 <%--ng-class="{'showErrorMessages': elasticsearchAdvancedForm.password.$invalid && elasticsearchAdvancedForm.password.$touched}">--%>
+                                <%--{{validationMessage}}--%>
+                            <%--</div>--%>
+                        <%--</div>--%>
+                    <%--</md-input-container>--%>
                     <!-- ***END*  XPACK SECURITY OPTIONS -->
-                    <md-divider></md-divider>
+                    <%--<md-divider></md-divider>--%>
                     <!-- ***START*  TRANSPORT OPTIONS -->
                     <md-subheader class="md-no-sticky">
                         <span message-key="ec_elasticsearchConnector.label.modal.transportSettings"></span>
@@ -136,8 +136,8 @@
                     </md-input-container>
                     <md-input-container class="md-block col-md-offset-2">
                         <label message-key="ec_elasticsearchConnector.label.modal.elasticsearch.pingTimeout"></label>
-                        <input title="Connect Timeout" name="pingTimeout" range-parser
-                               ng-pattern="/^[0-9]*$/"
+                        <input title="Connect Timeout" name="pingTimeout"
+                               ng-pattern="/^[0-9]+[a-z]{1}$/"
                                ng-model="cecc.connection.options.transport.pingTimeout">
                         <div ng-messages="elasticsearchAdvancedForm.pingTimeout.$error">
                             <div ng-message-exp='validationName'
@@ -149,8 +149,8 @@
                     </md-input-container>
                     <md-input-container class="md-block col-md-offset-2">
                         <label message-key="ec_elasticsearchConnector.label.modal.elasticsearch.nodesSamplerInterval"></label>
-                        <input title="Nodes Sampler Interval" name="nodesSamplerInterval" range-parser
-                               ng-pattern="/^[0-9]*$/"
+                        <input title="Nodes Sampler Interval" name="nodesSamplerInterval"
+                               ng-pattern="/^[0-9]+[a-z]{1}$/"
                                ng-model="cecc.connection.options.transport.nodesSamplerInterval">
                         <div ng-messages="elasticsearchAdvancedForm.nodesSamplerInterval.$error">
                             <div ng-message-exp='validationName'

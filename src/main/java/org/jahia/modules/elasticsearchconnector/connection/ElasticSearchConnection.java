@@ -37,8 +37,8 @@ public class ElasticSearchConnection extends AbstractConnection {
     public static final String CLUSTER_NAME = "ec:clusterName";
 
     public static final String DEFAULT_CLUSTER_NAME = "elasticsearch";
-    public static final int DEFAULT_PING_TIMEOUT = 5;
-    public static final int DEFAULT_NODES_SAMPLER_INTERVAL = 5;
+    public static final String DEFAULT_PING_TIMEOUT = "5s";
+    public static final String DEFAULT_NODES_SAMPLER_INTERVAL = "5s";
     public static final boolean DEFAULT_IGNORE_CLUSTER_NAME = true;
 
     public static final String DATABASE_TYPE = "ELASTICSEARCH";
@@ -141,7 +141,42 @@ public class ElasticSearchConnection extends AbstractConnection {
         serializedString.append(TABU).append("isConnected ").append(DOUBLE_QUOTE).append(this.isConnected()).append(DOUBLE_QUOTE).append(NEW_LINE);
         serializedString.append(TABU + "port " + DOUBLE_QUOTE).append(this.port != null ? this.port : DEFAULT_PORT).append(DOUBLE_QUOTE).append(NEW_LINE);
 
-        //TODO add advanced options
+        if (this.options != null) {
+            try {
+                JSONObject jsonOptions = new JSONObject(this.options);
+                serializedString.append(TABU + "options {");
+                //Handle connection pool settings
+                if (jsonOptions.has("transport")) {
+                    JSONObject transport = jsonOptions.getJSONObject("transport");
+                    serializedString.append(NEW_LINE).append(TABU).append(TABU).append("transport {");
+                    if (transport.has("ignore_cluster_name") && !StringUtils.isEmpty(transport.getString("ignore_cluster_name"))) {
+                        serializedString.append(NEW_LINE).append(TABU).append(TABU).append(TABU).append("ignore_cluster_name ").append(DOUBLE_QUOTE).append(transport.getString("ignore_cluster_name")).append(DOUBLE_QUOTE);
+                    }
+                    if (transport.has("pingTimeout") && !StringUtils.isEmpty(transport.getString("pingTimeout"))) {
+                        serializedString.append(NEW_LINE).append(TABU).append(TABU).append(TABU).append("pingTimeout ").append(DOUBLE_QUOTE).append(transport.getString("pingTimeout")).append(DOUBLE_QUOTE);
+                    }
+                    if (transport.has("nodesSamplerInterval") && !StringUtils.isEmpty(transport.getString("nodesSamplerInterval"))) {
+                        serializedString.append(NEW_LINE).append(TABU).append(TABU).append(TABU).append("nodesSamplerInterval ").append(DOUBLE_QUOTE).append(transport.getString("nodesSamplerInterval")).append(DOUBLE_QUOTE);
+                    }
+                    serializedString.append(NEW_LINE).append(TABU).append(TABU).append("}");
+                }
+                if (jsonOptions.has("additionalTransportAddresses")) {
+                    JSONArray ata = jsonOptions.getJSONArray("additionalTransportAddresses");
+                    serializedString.append(NEW_LINE).append(TABU).append(TABU).append("additionalTransportAddresses [");
+                    for (int i = 0; i < ata.length(); i++) {
+                        if (i != 0) {
+                            serializedString.append(", ");
+                        }
+                        JSONObject member = ata.getJSONObject(i);
+                        serializedString.append(NEW_LINE).append(TABU).append(TABU).append(TABU).append(DOUBLE_QUOTE).append(member.getString("host")).append(member.has("port") && !StringUtils.isEmpty(member.getString("port")) ? ":" + member.getString("port") : "").append(DOUBLE_QUOTE);
+                    }
+                    serializedString.append(NEW_LINE).append(TABU).append(TABU).append("]");
+                }
+                serializedString.append(NEW_LINE).append(TABU).append("}");
+            } catch (JSONException ex) {
+                logger.error("Failed to parse connection options json", ex.getMessage());
+            }
+        }
 
         return serializedString.toString();
     }
