@@ -160,8 +160,8 @@
                 data: data
             }).then(function (response) {
                 cecc.spinnerOptions.showSpinner = false;
-                $mdDialog.hide();
                 showConfirmationToast(response.connectionVerified);
+                $scope.closeDialog('hide');
             }, function (response) {
                 cecc.spinnerOptions.showSpinner = false;
                 console.log('error', response);
@@ -176,6 +176,7 @@
 
         function editElasticSearchConnection() {
             if (cecc.mode === 'import-edit') {
+                $scope.closeDialog('hide');
                 return;
             }
             cecc.spinnerOptions.showSpinner = true;
@@ -249,13 +250,8 @@
         }
 
         function cancel() {
-            if (cecc.mode === 'import-edit') {
-                $scope.$emit('importConnectionClosed', null);
-            } else {
-                $DCSS.selectedDatabaseType = null;
-                $scope.closeDialog('cancel');
-                //@TODO reset display of currently selected directive.
-            }
+            $DCSS.selectedDatabaseType = null;
+            $scope.closeDialog('cancel');
         }
 
         function updateIsEmpty(property) {
@@ -322,7 +318,7 @@
                 cecc.connection.user="";
                 cecc.connection.password="";
             }
-            $scope.$emit('importConnectionClosed', cecc.connection);
+            $scope.closeDialog('hide');
         }
 
         function addTransportAddress() {
