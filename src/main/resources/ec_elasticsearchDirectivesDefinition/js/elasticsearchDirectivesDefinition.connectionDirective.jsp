@@ -161,15 +161,6 @@
             }).then(function (response) {
 
                 cecc.spinnerOptions.showSpinner = false;
-                $scope.$emit('connectionSuccessfullyCreated', null);
-                var con = angular.copy(cecc.connection);
-                con.databaseType = "ELASTICSEARCH";
-                if ($DCSS.state.connections === null) {
-                    $DCSS.state.connections = [con];
-                }
-                else {
-                    $DCSS.state.connections.push(con);
-                }
                 $mdDialog.hide();
                 showConfirmationToast(response.connectionVerified);
             }, function (response) {
