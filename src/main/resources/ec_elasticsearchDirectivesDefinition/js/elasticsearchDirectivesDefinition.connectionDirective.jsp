@@ -159,7 +159,6 @@
                 method: 'POST',
                 data: data
             }).then(function (response) {
-
                 cecc.spinnerOptions.showSpinner = false;
                 $mdDialog.hide();
                 showConfirmationToast(response.connectionVerified);

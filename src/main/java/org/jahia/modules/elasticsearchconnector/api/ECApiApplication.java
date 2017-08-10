@@ -19,8 +19,7 @@ public class ECApiApplication extends ResourceConfig {
                 ECApi.class,
                 JacksonJaxbJsonProvider.class,
                 HeadersResponseFilter.class,
-                MultiPartFeature.class,
-                LoggingFilter.class
+                MultiPartFeature.class
         );
     }
 }
