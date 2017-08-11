@@ -24,6 +24,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.query.QueryResult;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import static org.jahia.modules.elasticsearchconnector.connection.ElasticSearchConnection.*;
 
 /**
  * 2017-05-17
@@ -103,6 +104,11 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
         ElasticSearchConnection elasticSearchConnection = (ElasticSearchConnection) connection;
 
         node.setProperty(ElasticSearchConnection.CLUSTER_NAME, elasticSearchConnection.getClusterName());
+    }
+
+    @Override
+    protected String getConnectionNodeType() {
+        return NODE_TYPE;
     }
 
     @Override
