@@ -62,7 +62,7 @@
             },
             clusterName: {
                 'required': i18n.message('dc_databaseConnector.label.validation.required'),
-                'pattern': i18n.message('dc_databaseConnector.label.validation.alphanumeric'),
+                'pattern': i18n.message('ec_elasticsearchConnector.label.validation.connectionId'),
                 'md-maxlength': i18n.format('dc_databaseConnector.label.validation.minLength', '30')
             },
             user: {

@@ -64,7 +64,7 @@
 
                     <md-input-container class="md-block">
                         <label message-key="ec_elasticsearchConnector.label.clusterName"></label>
-                        <input title="Database Name" md-maxlength="30" required ng-pattern="/^[a-zA-Z0-9_]+$/"
+                        <input title="Database Name" md-maxlength="30" required ng-pattern="/^[\w]+[\w\-]+[\w]+$/"
                                name="clusterName"
                                ng-model="cecc.connection.clusterName">
                         <div ng-messages="elasticsearchForm.clusterName.$error">
