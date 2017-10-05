@@ -182,7 +182,7 @@
         <dependency>
             <groupId>org.jahia.modules</groupId>
             <artifactId>jcrestapi</artifactId>
-            <version>LATEST</version>
+            <version>2.3.1</version>
             <scope>provided</scope>
         </dependency>
         <!-- **START** ELASTIC SEARCH DEPENDENCIES -->
