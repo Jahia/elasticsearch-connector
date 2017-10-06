@@ -8,6 +8,7 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.jahia.modules.databaseConnector.connection.AbstractConnection;
 import org.jahia.modules.databaseConnector.connection.ConnectionData;
 import org.jahia.modules.elasticsearchconnector.http.ElasticSearchTransportClient;
+import org.jahia.services.content.JCRContentUtils;
 import org.jahia.utils.EncryptionUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -34,7 +35,7 @@ public class ElasticSearchConnection extends AbstractConnection {
     public static final String NODE_TYPE = "ec:elasticsearchConnection";
     public static final Integer DEFAULT_PORT = 9300;
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearchConnection.class);
-    public static final String CLUSTER_NAME = "ec:clusterName";
+    public static final String CLUSTER_NAME_PROPERTY = "ec:clusterName";
 
     public static final String DEFAULT_CLUSTER_NAME = "elasticsearch";
     public static final String DEFAULT_PING_TIMEOUT = "5s";
@@ -250,5 +251,10 @@ public class ElasticSearchConnection extends AbstractConnection {
     public String parseOptions(LinkedHashMap options) {
         //@TODO implement parsing options
         return null;
+    }
+
+    @Override
+    public String getPath() {
+        return CONNECTION_BASE + "/" + JCRContentUtils.generateNodeName(getId());
     }
 }

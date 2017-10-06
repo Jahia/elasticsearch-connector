@@ -85,6 +85,7 @@ public class ECApi extends DatabaseConnectionAPI {
                 connection.isConnected(isConnected);
                 connection.setClusterName(clusterName);
                 connection.setOptions(options);
+                connection.setDatabaseType(ElasticSearchConnection.DATABASE_TYPE);
                 JSONObject jsonAnswer = new JSONObject();
                 if (!databaseConnectorService.testConnection(connection)) {
                     connection.isConnected(false);
@@ -149,6 +150,7 @@ public class ECApi extends DatabaseConnectionAPI {
                 connection.isConnected(isConnected);
                 connection.setClusterName(clusterName);
                 connection.setOptions(options);
+                connection.setDatabaseType(ElasticSearchConnection.DATABASE_TYPE);
 
                 JSONObject jsonAnswer = new JSONObject();
                 if (!databaseConnectorService.testConnection(connection)) {

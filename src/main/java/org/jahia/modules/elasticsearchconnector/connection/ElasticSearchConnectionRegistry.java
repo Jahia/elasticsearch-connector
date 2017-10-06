@@ -68,20 +68,8 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
                 NodeIterator it = queryResult.getNodes();
                 while (it.hasNext()) {
                     JCRNodeWrapper connectionNode = (JCRNodeWrapper) it.next();
-                    String id = setStringConnectionProperty(connectionNode, AbstractConnection.ID_KEY, true);
-                    String host = setStringConnectionProperty(connectionNode, AbstractConnection.HOST_KEY, true);
-                    Integer port = setIntegerConnectionProperty(connectionNode, AbstractConnection.PORT_KEY, true);
-                    Boolean isConnected = setBooleanConnectionProperty(connectionNode, AbstractConnection.IS_CONNECTED_KEY);
-                    String clusterName = setStringConnectionProperty(connectionNode, ElasticSearchConnection.CLUSTER_NAME, false);
-                    String options = setStringConnectionProperty(connectionNode, AbstractConnection.OPTIONS_KEY, false);
-                    ElasticSearchConnection storedConnection = new ElasticSearchConnection(id);
-                    storedConnection.setOldId(id);
-                    storedConnection.setHost(host);
-                    storedConnection.setPort(port);
-                    storedConnection.isConnected(isConnected);
-                    storedConnection.setClusterName(clusterName);
-                    storedConnection.setOptions(options);
-                    registry.put(id, storedConnection);
+                    ElasticSearchConnection connection = (ElasticSearchConnection) nodeToConnection(connectionNode);
+                    registry.put(connection.getId(), connection);
                 }
                 return true;
             }
@@ -103,7 +91,7 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
     protected void storeAdvancedConfig(AbstractConnection connection, JCRNodeWrapper node) throws RepositoryException {
         ElasticSearchConnection elasticSearchConnection = (ElasticSearchConnection) connection;
 
-        node.setProperty(ElasticSearchConnection.CLUSTER_NAME, elasticSearchConnection.getClusterName());
+        node.setProperty(ElasticSearchConnection.CLUSTER_NAME_PROPERTY, elasticSearchConnection.getClusterName());
     }
 
     @Override
@@ -242,4 +230,24 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
         return  result;
     }
 
+    @Override
+    public AbstractConnection nodeToConnection(JCRNodeWrapper connectionNode) throws RepositoryException {
+        //TODO why do we call this method a setter when it is not setting anything and is there a way we can simplify "isMandatory" mechanism???
+        String id = setStringConnectionProperty(connectionNode, ElasticSearchConnection.ID_PROPERTY, true);
+        String host = setStringConnectionProperty(connectionNode, ElasticSearchConnection.HOST_PROPERTY, true);
+        String connectionType = setStringConnectionProperty(connectionNode, ElasticSearchConnection.DATABASE_TYPE_PROPETRY, true);
+        Integer port = setIntegerConnectionProperty(connectionNode, ElasticSearchConnection.PORT_PROPERTY, true);
+        Boolean isConnected = setBooleanConnectionProperty(connectionNode, ElasticSearchConnection.IS_CONNECTED_PROPERTY);
+        String clusterName = setStringConnectionProperty(connectionNode, ElasticSearchConnection.CLUSTER_NAME_PROPERTY, false);
+        String options = setStringConnectionProperty(connectionNode, ElasticSearchConnection.OPTIONS_PROPERTY, false);
+        ElasticSearchConnection storedConnection = new ElasticSearchConnection(id);
+        storedConnection.setOldId(id);
+        storedConnection.setHost(host);
+        storedConnection.setPort(port);
+        storedConnection.isConnected(isConnected);
+        storedConnection.setClusterName(clusterName);
+        storedConnection.setOptions(options);
+        storedConnection.setDatabaseType(connectionType);
+        return storedConnection;
+    }
 }
