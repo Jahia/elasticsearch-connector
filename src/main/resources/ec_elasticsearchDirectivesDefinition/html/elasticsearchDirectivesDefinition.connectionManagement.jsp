@@ -50,6 +50,7 @@
                     <md-input-container class="md-block">
                         <label message-key="ec_elasticsearchConnector.label.id"></label>
                         <input title="Connection Name" md-maxlength="30" name="id" required
+                               ng-readonly="cecc.mode === 'edit'"
                                ng-pattern="/^[\w]+[\w\-]+[\w]+$/"
                                ng-model="cecc.connection.id" original-value="{{cecc.connection.oldId}}"
                                connection-id-validator="{{cecc.databaseType}}">
