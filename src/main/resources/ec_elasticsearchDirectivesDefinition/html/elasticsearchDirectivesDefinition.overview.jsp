@@ -13,6 +13,8 @@
                 <dd><time>{{egsc.connectionStatus.clusterName.value}} </time></dd>
                 <dt message-key="ec_elasticsearchConnector.label.statistics.clusterStatus"></dt>
                 <dd>{{egsc.connectionStatus.status}}</dd>
+                <dt message-key="dc_databaseConnector.label.version"></dt>
+                <dd>{{egsc.connectionStatus.aboutConnection.dbVersion}}</dd>
             </dl>
         </div>
         <div flex="50">

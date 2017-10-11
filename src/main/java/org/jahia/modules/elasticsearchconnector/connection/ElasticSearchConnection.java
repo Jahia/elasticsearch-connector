@@ -3,6 +3,9 @@ package org.jahia.modules.elasticsearchconnector.connection;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.apache.commons.lang.StringUtils;
+import org.elasticsearch.Version;
+import org.elasticsearch.action.admin.cluster.node.info.NodeInfo;
+import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.jahia.modules.databaseConnector.connection.AbstractConnection;
@@ -19,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import static org.jahia.modules.databaseConnector.util.Utils.DOUBLE_QUOTE;
 import static org.jahia.modules.databaseConnector.util.Utils.NEW_LINE;
@@ -228,6 +232,7 @@ public class ElasticSearchConnection extends AbstractConnection {
         Gson gson = new Gson();
         JSONObject obj = null;
         try {
+            String version = esTransportClient.admin().cluster().prepareNodesInfo().all().get().getNodes().get(0).getVersion().toString();
             obj = new JSONObject(gson.toJson(esTransportClient.admin().cluster().prepareClusterStats().get()));
             JSONObject aboutConnection = new JSONObject();
             aboutConnection.put("host", this.host);
@@ -235,6 +240,7 @@ public class ElasticSearchConnection extends AbstractConnection {
             aboutConnection.put("dbname", this.dbName);
             aboutConnection.put("id", this.id);
             aboutConnection.put("uri", this.uri);
+            aboutConnection.put("dbVersion", version);
             obj.put("aboutConnection", aboutConnection);
         } catch (JSONException e) {
             logger.error("Failed to parse connection statistics to response");
