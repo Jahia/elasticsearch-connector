@@ -229,6 +229,7 @@ public class ElasticSearchConnection extends AbstractConnection {
         elasticSearchConnectionData.isConnected(isConnected);
         elasticSearchConnectionData.setClusterName(clusterName == null ? DEFAULT_CLUSTER_NAME : clusterName);
         elasticSearchConnectionData.setPassword(password);
+        elasticSearchConnectionData.setUser(user);
         elasticSearchConnectionData.setDatabaseType(DATABASE_TYPE);
         elasticSearchConnectionData.setOptions(options);
         elasticSearchConnectionData.setDisplayName(DISPLAY_NAME);
@@ -246,6 +247,8 @@ public class ElasticSearchConnection extends AbstractConnection {
             aboutConnection.put("host", this.host);
             aboutConnection.put("port", this.port);
             aboutConnection.put("dbname", this.dbName);
+            aboutConnection.put("user", this.user);
+            aboutConnection.put("password", this.password);
             aboutConnection.put("id", this.id);
             aboutConnection.put("uri", this.uri);
             aboutConnection.put("dbVersion", version);
