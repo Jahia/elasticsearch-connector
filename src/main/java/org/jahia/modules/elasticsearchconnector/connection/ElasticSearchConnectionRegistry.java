@@ -124,6 +124,7 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
                 Integer port = map.containsKey("port") ? Integer.parseInt((String) map.get("port")) : ElasticSearchConnection.DEFAULT_PORT;
                 Boolean isConnected = map.containsKey("isConnected") && Boolean.parseBoolean((String) map.get("isConnected"));
                 String clusterName = map.containsKey("clusterName") ? (String) map.get("clusterName") : ElasticSearchConnection.DEFAULT_CLUSTER_NAME;
+                String username = map.containsKey("user") ? (String) map.get("user") : null;
                 String options = map.containsKey("options") ? connection.parseOptions((LinkedHashMap) map.get("options")) : null;
                 map.put("options", options);
                 String password = (String) map.get("password");
@@ -136,6 +137,8 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
                 connection.setClusterName(clusterName);
                 connection.setPassword(password);
                 connection.setOptions(options);
+                connection.setUser(username);
+                connection.setPassword(password);
 
                 addEditConnection(connection, false);
                 map.put("status", "success");
@@ -192,13 +195,15 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
             Integer port = jsonConnectionData.has("port") && !StringUtils.isEmpty(jsonConnectionData.getString("port")) ? jsonConnectionData.getInt("port") : null;
             Boolean isConnected = jsonConnectionData.has("isConnected") && jsonConnectionData.getBoolean("isConnected");
             String clusterName  = jsonConnectionData.has("clusterName") ? jsonConnectionData.getString("clusterName") : ElasticSearchConnection.DEFAULT_CLUSTER_NAME;
-            String password = jsonConnectionData.has("password") ? jsonConnectionData.getString("password") : null;
             String options = jsonConnectionData.has("options") ? jsonConnectionData.getString("options") : null;
+            String password = jsonConnectionData.has("password") ? jsonConnectionData.getString("password") : null;
+            String user = jsonConnectionData.has("user") ? jsonConnectionData.getString("user") : null;
 
             ElasticSearchConnection connection = new ElasticSearchConnection(id);
 
             connection.setHost(host);
             connection.setPort(port);
+            connection.setUser(user);
             connection.isConnected(isConnected);
             connection.setClusterName(clusterName);
             if (password != null && password.contains("_ENC")) {
@@ -226,6 +231,7 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
             result.put("password", EncryptionUtils.passwordBaseEncrypt(connection.getPassword()) + "_ENC");
 
         }
+        result.put("user", connection.getUser());
         return  result;
     }
 
@@ -239,6 +245,8 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
         Boolean isConnected = setBooleanConnectionProperty(connectionNode, ElasticSearchConnection.IS_CONNECTED_PROPERTY);
         String clusterName = setStringConnectionProperty(connectionNode, ElasticSearchConnection.CLUSTER_NAME_PROPERTY, false);
         String options = setStringConnectionProperty(connectionNode, ElasticSearchConnection.OPTIONS_PROPERTY, false);
+        String password = decodePassword(connectionNode, ElasticSearchConnection.PASSWORD_PROPERTY);
+        String user = setStringConnectionProperty(connectionNode, ElasticSearchConnection.USER_PROPERTY, false);
         ElasticSearchConnection storedConnection = new ElasticSearchConnection(id);
         storedConnection.setOldId(id);
         storedConnection.setHost(host);
@@ -247,6 +255,8 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
         storedConnection.setClusterName(clusterName);
         storedConnection.setOptions(options);
         storedConnection.setDatabaseType(connectionType);
+        storedConnection.setUser(user);
+        storedConnection.setPassword(password);
         return storedConnection;
     }
 }

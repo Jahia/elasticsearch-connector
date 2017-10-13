@@ -153,6 +153,8 @@ public class ElasticSearchConnection extends AbstractConnection {
         serializedString.append(TABU).append("identifier ").append(DOUBLE_QUOTE).append(this.id).append(DOUBLE_QUOTE).append(NEW_LINE);
         serializedString.append(TABU).append("isConnected ").append(DOUBLE_QUOTE).append(this.isConnected()).append(DOUBLE_QUOTE).append(NEW_LINE);
         serializedString.append(TABU + "port " + DOUBLE_QUOTE).append(this.port != null ? this.port : DEFAULT_PORT).append(DOUBLE_QUOTE).append(NEW_LINE);
+        serializedString.append(TABU + "password " + DOUBLE_QUOTE).append(this.port != null ? this.password : DEFAULT_PORT).append(DOUBLE_QUOTE).append(NEW_LINE);
+        serializedString.append(TABU + "user " + DOUBLE_QUOTE).append(this.port != null ? this.user : DEFAULT_PORT).append(DOUBLE_QUOTE).append(NEW_LINE);
         serializedString.append(TABU + "clusterName " + DOUBLE_QUOTE).append(this.clusterName != null ? this.clusterName : DEFAULT_CLUSTER_NAME).append(DOUBLE_QUOTE).append(NEW_LINE);
 
         if (this.options != null) {
