@@ -77,8 +77,8 @@ public class ECApi extends DatabaseConnectionAPI {
                 String host = connectionParameters.has("host") ? connectionParameters.getString("host") : null;
                 Integer port = connectionParameters.has("port") && !StringUtils.isEmpty(connectionParameters.getString("port")) ? connectionParameters.getInt("port") : null;
                 Boolean isConnected = connectionParameters.has("isConnected") && connectionParameters.getBoolean("isConnected");
-                String password = connectionParameters.has("password") ? connectionParameters.getString("password") : null;
-                String user = connectionParameters.has("user") ? connectionParameters.getString("user") : null;
+                String password = connectionParameters.has("password") ? StringUtils.defaultIfEmpty(connectionParameters.getString("password"), null) : null;
+                String user = connectionParameters.has("user") ? StringUtils.defaultIfEmpty(connectionParameters.getString("user"), null) : null;
                 String clusterName = connectionParameters.has("clusterName") ? connectionParameters.getString("clusterName") : null;
                 String options = connectionParameters.has("options") ? connectionParameters.getString("options") : null;
                 ElasticSearchConnection connection = new ElasticSearchConnection(id);
