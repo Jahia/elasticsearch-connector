@@ -12,8 +12,6 @@ import org.json.JSONObject;
 
 import java.util.Arrays;
 
-//import org.elasticsearch.transport.client.PreBuiltTransportClient;
-
 /**
  * Created by stefan on 2017-05-30.
  */

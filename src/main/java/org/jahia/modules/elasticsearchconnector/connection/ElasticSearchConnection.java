@@ -1,22 +1,16 @@
 package org.jahia.modules.elasticsearchconnector.connection;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import org.apache.commons.lang.StringUtils;
-import org.elasticsearch.Version;
-import org.elasticsearch.action.admin.cluster.node.info.NodeInfo;
-import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.jahia.modules.databaseConnector.connection.AbstractConnection;
 import org.jahia.modules.databaseConnector.connection.ConnectionData;
-import org.jahia.modules.databaseConnector.services.ConnectionService;
 import org.jahia.modules.elasticsearchconnector.http.ElasticSearchTransportClient;
 import org.jahia.modules.elasticsearchconnector.http.ElasticSearchXPackTransportClient;
 import org.jahia.modules.elasticsearchconnector.http.TransportClientService;
 import org.jahia.services.content.JCRContentUtils;
-import org.jahia.utils.EncryptionUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.LinkedHashMap;
-import java.util.List;
 
 import static org.jahia.modules.databaseConnector.util.Utils.DOUBLE_QUOTE;
 import static org.jahia.modules.databaseConnector.util.Utils.NEW_LINE;

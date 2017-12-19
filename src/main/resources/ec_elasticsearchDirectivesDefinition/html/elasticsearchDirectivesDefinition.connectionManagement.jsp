@@ -13,7 +13,7 @@
                     <md-button class="md-fab md-mini md-success pull-right"
                                ng-click="cecc.testElasticSearchConnection()"
                                ng-disabled="elasticsearchForm.$invalid || elasticsearchAdvancedForm.$invalid">
-                        <i class="fa fa-lg fa-check-circle-o"></i>
+                        <i class="material-icons">check_circle</i>
                         <md-tooltip class="noToolTipAnimation"
                                     md-direction="top"
                                     md-delay="500">
@@ -210,14 +210,14 @@
                                 <md-icon class="md-secondary"
                                          title="Remove Transport Address"
                                          ng-click="cecc.removeTransportAddress($index)">
-                                    <i class="fa fa-trash-o"></i>
+                                    <i class="material-icons">delete</i>
                                 </md-icon>
                             </md-list-item>
                             <md-list-item>
                                 <md-icon class="md-secondary"
                                          title="Add Transport Address"
                                          ng-click="cecc.addTransportAddress()">
-                                    <i class="fa fa-plus"></i>
+                                    <i class="material-icons">add</i>
                                 </md-icon>
                             </md-list-item>
                         </md-list>
