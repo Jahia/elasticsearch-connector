@@ -33,7 +33,7 @@
         .directive('elasticsearchConnectionDirective', ['$log', 'contextualData', 'dcTemplateResolver', elasticsearchConnectionDirective]);
 
     var ElasticsearchConnectionDirectiveController = function ($scope, contextualData,
-                                                       dcDataFactory, toaster, i18n, $DCSS, $mdDialog) {
+                                                       dcDataFactory, $mdToast, i18n, $DCSS, $mdDialog) {
         var cecc = this;
 
         cecc.isEmpty = {};
@@ -165,12 +165,13 @@
             }, function (response) {
                 cecc.spinnerOptions.showSpinner = false;
                 console.log('error', response);
-                toaster.pop({
-                    type: 'error',
-                    title: i18n.message('dc_databaseConnector.toast.title.connectionInvalid'),
-                    toastId: 'cti',
-                    timeout: 3000
-                });
+                $mdToast.show(
+                    $mdToast.simple()
+                        .textContent(i18n.message('dc_databaseConnector.toast.title.connectionInvalid'))
+                        .position('top right')
+                        .toastClass('toast-warn')
+                        .hideDelay(3000)
+                );
             });
         }
 
@@ -199,12 +200,13 @@
             }, function (response) {
                 cecc.spinnerOptions.showSpinner = false;
                 console.log('error', response);
-                toaster.pop({
-                    type: 'error',
-                    title: i18n.message('dc_databaseConnector.toast.title.connectionInvalid'),
-                    toastId: 'cti',
-                    timeout: 3000
-                });
+                $mdToast.show(
+                    $mdToast.simple()
+                        .textContent(i18n.message('dc_databaseConnector.toast.title.connectionInvalid'))
+                        .position('top right')
+                        .toastClass('toast-error')
+                        .hideDelay(3000)
+                );
             });
         }
 
@@ -227,21 +229,15 @@
                 method: 'POST',
                 data: data
             }).then(function (response) {
-                if (response.result) {
-                    toaster.pop({
-                        type: 'success',
-                        title: i18n.message('dc_databaseConnector.toast.title.connectionValid'),
-                        toastId: 'ctv',
-                        timeout: 3000
-                    });
-                } else {
-                    toaster.pop({
-                        type: 'error',
-                        title: i18n.message('dc_databaseConnector.toast.title.connectionInvalid'),
-                        toastId: 'cti',
-                        timeout: 3000
-                    });
-                }
+                console.log(response);
+                var textContent = response.result ? i18n.message('dc_databaseConnector.toast.title.connectionValid') : i18n.message('dc_databaseConnector.toast.title.connectionInvalid')
+                $mdToast.show(
+                    $mdToast.simple()
+                        .textContent(textContent)
+                        .position('top right')
+                        .toastClass(response.result ? 'toast-success' : 'toast-error')
+                        .hideDelay(3000)
+                );
                 cecc.spinnerOptions.showSpinner = false;
             }, function (response) {
                 console.log('error', response);
@@ -259,23 +255,14 @@
         }
 
         function showConfirmationToast(verified) {
-            if (verified) {
-                toaster.pop({
-                    type: 'success',
-                    title: i18n.message('dc_databaseConnector.toast.title.connectionSavedSuccessfully'),
-                    body: i18n.message('dc_databaseConnector.toast.message.connectionVerificationSuccessful'),
-                    toastId: 'cm',
-                    timeout: 4000
-                });
-            } else {
-                toaster.pop({
-                    type: 'warning',
-                    title: i18n.message('dc_databaseConnector.toast.title.connectionSavedSuccessfully'),
-                    body: i18n.message('dc_databaseConnector.toast.message.connectionVerificationFailed'),
-                    toastId: 'cm',
-                    timeout: 4000
-                });
-            }
+            var textContent = verified ? i18n.message('dc_databaseConnector.toast.message.connectionVerificationSuccessful') : i18n.message('dc_databaseConnector.toast.message.connectionVerificationFailed');
+            $mdToast.show(
+                $mdToast.simple()
+                    .textContent(textContent)
+                    .position('top right')
+                    .toastClass(verified ? 'toast-success' : 'toast-warn')
+                    .hideDelay(3000)
+            );
         }
 
         function prepareOptions(options) {
@@ -354,6 +341,6 @@
     };
 
     ElasticsearchConnectionDirectiveController.$inject = ['$scope', 'contextualData',
-        'dcDataFactory', 'toaster', 'i18nService', '$DCStateService', '$mdDialog'];
+        'dcDataFactory', '$mdToast', 'i18nService', '$DCStateService', '$mdDialog'];
 
 })();

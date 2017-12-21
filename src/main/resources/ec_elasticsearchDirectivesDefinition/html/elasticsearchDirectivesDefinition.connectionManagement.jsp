@@ -10,7 +10,7 @@
                         <span class="ipsum" message-key="dc_databaseConnector.label.connection.enableConnection"></span>
                     </md-checkbox>
 
-                    <md-button class="md-fab md-mini md-success pull-right"
+                    <md-button class="md-fab md-mini md-success float-right center-content"
                                ng-click="cecc.testElasticSearchConnection()"
                                ng-disabled="elasticsearchForm.$invalid || elasticsearchAdvancedForm.$invalid">
                         <i class="material-icons">check_circle</i>
@@ -86,7 +86,7 @@
                     <!-- ***START*  XPACK SECURITY OPTIONS -->
                     <md-subheader class=" md-no-sticky">
                         <span message-key="ec_elasticsearchConnector.label.modal.elasticsearch.useXPackSecurity"></span>
-                        <md-checkbox class="pull-right"
+                        <md-checkbox class="float-right"
                                      ng-model="cecc.connection.options.useXPackSecurity"
                                      ng-true-value="true"
                                      ng-false-value="false"
@@ -129,7 +129,8 @@
                     </md-subheader>
                     <md-input-container class="md-block col-md-offset-2">
                         <label message-key="ec_elasticsearchConnector.label.modal.elasticsearch.ignoreClusterName"></label>
-                        <md-checkbox class="pull-right"
+                        <md-checkbox class="float-right"
+                                     style="padding-right:13px;"
                                      ng-model="cecc.connection.options.transport.ignoreClusterName"
                                      ng-true-value="true"
                                      ng-false-value="false">
@@ -167,7 +168,7 @@
                     <!-- ***START*  ADDITIONAL TRANSPORT ADDRESSES OPTION -->
                     <md-subheader class=" md-no-sticky">
                         <span message-key="ec_elasticsearchConnector.label.modal.elasticsearch.additionalTransportAddresses"></span>
-                        <md-checkbox class="pull-right"
+                        <md-checkbox class="float-right"
                                      ng-model="cecc.enableAdditionalTransportAddresses"
                                      ng-true-value="true"
                                      ng-false-value="false"
@@ -228,24 +229,24 @@
         </md-tab>
     </md-tabs>
     <md-button ng-if="cecc.mode=='create'"
-               class="md-raised md-primary pull-right"
+               class="md-raised md-primary float-right"
                ng-click="cecc.createElasticSearchConnection()"
                ng-disabled="elasticsearchForm.$invalid || elasticsearchAdvancedForm.$invalid"
                message-key="dc_databaseConnector.label.create">
     </md-button>
     <md-button ng-if="cecc.mode=='edit'"
-               class="md-raised md-primary pull-right"
+               class="md-raised md-primary float-right"
                ng-click="cecc.editElasticSearchConnection()"
                ng-disabled="elasticsearchForm.$invalid || elasticsearchAdvancedForm.$invalid"
                message-key="dc_databaseConnector.label.update">
     </md-button>
-    <md-button class="md-raised md-primary pull-right"
+    <md-button class="md-raised md-primary float-right"
                ng-disabled="elasticsearchForm.$invalid || elasticsearchAdvancedForm.$invalid"
                ng-if="cecc.mode=='import-edit'"
                ng-click="cecc.updateImportedConnection()"
                message-key="dc_databaseConnector.label.ok">
     </md-button>
-    <md-button class="md-raised md-primary pull-right"
+    <md-button class="md-raised md-primary float-right"
                ng-click="cecc.cancel()">
         <span ng-if="cecc.mode=='edit' || cecc.mode=='create'"
               message-key="dc_databaseConnector.label.back"></span>
