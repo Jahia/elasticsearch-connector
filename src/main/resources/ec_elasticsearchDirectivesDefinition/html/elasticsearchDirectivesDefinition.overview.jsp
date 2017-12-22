@@ -1,5 +1,6 @@
-<md-content flex layout-padding>
-    <div layout="row" layout-padding layout-wrap class="box-wrap">
+<md-card class="db-card">
+    <md-card-content>
+    <div layout="row" layout-padding layout-wrap>
         <div flex="100" layout-padding>
             <h2 class="md-title bg-info center-align">{{egsc.title}}</h2>
         </div>
@@ -24,10 +25,11 @@
                 <dt message-key="ec_elasticsearchConnector.label.statistics.nodesNumber"></dt>
                 <dd>{{egsc.connectionStatus.nodes.length}}</dd>
                 <dt message-key="ec_elasticsearchConnector.label.statistics.storeSize"></dt>
-                <dd>{{(egsc.connectionStatus.indicesStats.store.sizeInBytes / (1024 * 1024)).toFixed(2)}} MB</dd>
+                <dd>{{_.isEmpty(egsc.connectionStatus.indicesStats.store.sizeInBytes) ? (egsc.connectionStatus.indicesStats.store.sizeInBytes / (1024 * 1024)).toFixed(2) + ' MB': 'N/A'}}</dd>
                 <dt message-key="ec_elasticsearchConnector.label.statistics.maxHeap"></dt>
-                <dd>{{(egsc.connectionStatus.nodesStats.jvm.heapMax / (1024 * 1024)).toFixed(2)}} MB</dd>
+                <dd>{{_.isEmpty(egsc.connectionStatus.nodesStats.jvm.heapMax) ? (egsc.connectionStatus.nodesStats.jvm.heapMax / (1024 * 1024)).toFixed(2) + ' MB': 'N/A'}}</dd>
             </dl>
         </div>
     </div>
-</md-content>
+    </md-card-content>
+</md-card>
