@@ -41,7 +41,7 @@ public class ElasticSearchConnection extends AbstractConnection {
     public static final String DEFAULT_CLUSTER_NAME = "elasticsearch";
     public static final String DEFAULT_PING_TIMEOUT = "5s";
     public static final String DEFAULT_NODES_SAMPLER_INTERVAL = "5s";
-    public static final boolean DEFAULT_IGNORE_CLUSTER_NAME = true;
+    public static final boolean DEFAULT_IGNORE_CLUSTER_NAME = false;
 
     public static final String DATABASE_TYPE = "ELASTICSEARCH";
     public static final String DISPLAY_NAME = "ElasticSearchDB";

@@ -196,9 +196,13 @@
             }).then(function (response) {
                 cecc.spinnerOptions.showSpinner = false;
                 showConfirmationToast(response.connectionVerified);
+                if (!response.connectionVerified) {
+                    cecc.connection.isConnected = false;
+                }
                 $scope.closeDialog('hide');
             }, function (response) {
                 cecc.spinnerOptions.showSpinner = false;
+                cecc.connection.isConnected = false;
                 console.log('error', response);
                 $mdToast.show(
                     $mdToast.simple()
