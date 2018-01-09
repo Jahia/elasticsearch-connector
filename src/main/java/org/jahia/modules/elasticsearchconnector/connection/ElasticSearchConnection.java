@@ -69,7 +69,7 @@ public class ElasticSearchConnection extends AbstractConnection {
         Settings.Builder builder = Settings.builder();
         builder.put("cluster.name", this.clusterName != null ? this.clusterName : DEFAULT_CLUSTER_NAME);
 
-        if (user != null) {
+        if (StringUtils.isNotEmpty(user)) {
             builder.put("xpack.security.user", user.concat(":").concat(password));
         }
 
@@ -271,6 +271,6 @@ public class ElasticSearchConnection extends AbstractConnection {
     }
 
     private TransportClientService resolveClient() {
-        return user != null ? new ElasticSearchXPackTransportClient(settings) : new ElasticSearchTransportClient(settings);
+        return StringUtils.isNotEmpty(user) ? new ElasticSearchXPackTransportClient(settings) : new ElasticSearchTransportClient(settings);
     }
 }
