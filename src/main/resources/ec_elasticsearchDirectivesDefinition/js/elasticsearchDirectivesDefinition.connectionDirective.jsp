@@ -33,7 +33,7 @@
         .directive('elasticsearchConnectionDirective', ['$log', 'contextualData', 'dcTemplateResolver', elasticsearchConnectionDirective]);
 
     var ElasticsearchConnectionDirectiveController = function ($scope, contextualData,
-                                                       dcDataFactory, $mdToast, i18n, $DCSS, $mdDialog) {
+                                                       dcDataFactory, $mdToast, i18n, $DCSS) {
         var cecc = this;
 
         cecc.isEmpty = {};
@@ -106,13 +106,13 @@
 
         cecc.getMessage = i18n.message;
 
-        cecc.$onInit = function init() {console.log('es connection management controller initialized');
+        cecc.$onInit = function init() {
             if (_.isUndefined(cecc.connection.port) || cecc.connection.port == null) {
                 cecc.connection.port = "9300";
+            } else {
+                //Make sure it is treated as a string in order for the max length validation to work correctly.
+                cecc.connection.port += "";
             }
-
-            /**TODO Implement when/if we implement X-Pack security handling**/
-
             cecc.isEmpty.password = updateIsEmpty('password');
             cecc.isEmpty.user = updateIsEmpty('user');
             if (cecc.mode === 'import-edit') {
@@ -345,6 +345,6 @@
     };
 
     ElasticsearchConnectionDirectiveController.$inject = ['$scope', 'contextualData',
-        'dcDataFactory', '$mdToast', 'i18nService', '$DCStateService', '$mdDialog'];
+        'dcDataFactory', '$mdToast', 'i18nService', '$DCStateService'];
 
 })();
