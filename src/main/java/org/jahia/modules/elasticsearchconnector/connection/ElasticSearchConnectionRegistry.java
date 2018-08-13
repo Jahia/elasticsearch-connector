@@ -70,6 +70,7 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
         this.context = context;
         this.setConnectorProperties(this.context.getBundle().getSymbolicName(), ElasticSearchConnectionRegistry.class.getName());
         this.populateRegistry();
+        this.registerServices();
     }
 
     @Deactivate
