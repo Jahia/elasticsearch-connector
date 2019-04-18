@@ -23,6 +23,7 @@
  */
 package org.jahia.modules.elasticsearchconnector.http;
 
+import org.elasticsearch.client.transport.TransportClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -31,7 +32,14 @@ import org.json.JSONObject;
  */
 public interface TransportClientService {
 
-    public JSONObject getStatus() throws JSONException;
+    JSONObject getStatus() throws JSONException;
 
-    public boolean testConnection();
+    boolean testConnection();
+
+    /**
+     * Retrieves the underlying ElasticSearch transport client. This client may be different depending on whether the
+     * standard TransportClient is used or if the X-Pack transport client is used.
+     * @return
+     */
+    TransportClient getTransportClient();
 }
