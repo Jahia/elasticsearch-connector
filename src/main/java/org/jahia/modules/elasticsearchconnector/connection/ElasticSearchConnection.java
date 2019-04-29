@@ -241,7 +241,7 @@ public class ElasticSearchConnection extends AbstractConnection {
     @Override
     public void beforeUnregisterAsService() {
         if (esTransportClient != null) {
-            esTransportClient.getTransportClient().close();
+            esTransportClient.close();
         }
     }
 
@@ -253,7 +253,7 @@ public class ElasticSearchConnection extends AbstractConnection {
             return transportClientService.testConnection();
         } finally {
             if (transportClientService != null) {
-                transportClientService.getTransportClient().close();
+                transportClientService.close();
             }
         }
     }

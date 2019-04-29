@@ -24,15 +24,9 @@
 package org.jahia.modules.elasticsearchconnector.http;
 
 import org.apache.commons.lang.StringUtils;
-import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
-import org.elasticsearch.client.ClusterAdminClient;
-import org.elasticsearch.client.transport.NoNodeAvailableException;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.plugins.Plugin;
-import org.jahia.modules.databaseConnector.services.ConnectionService;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,52 +41,17 @@ import java.util.ArrayList;
  * This is a special client wrapper that uses a built-in class loader to avoid loading the X-Pack classes into the
  * global class loader.
  */
-public class ElasticSearchXPackTransportClient implements TransportClientService, ConnectionService {
+public class ElasticSearchXPackTransportClient extends AbstractTransportClientService {
 
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearchXPackTransportClient.class);
 
-    private TransportClient transportClient = null;
+    private ChildFirstClassLoader childFirstClassLoader = null;
 
     public ElasticSearchXPackTransportClient(Settings.Builder settingsBuilder, String transportClientClassName,
                                              String transportClientJarDirectory,
                                              String transportClientProperties,
                                              Class<? extends Plugin>... plugins) {
         transportClient = newTransportClient(settingsBuilder, transportClientClassName, transportClientJarDirectory, transportClientProperties, plugins);
-    }
-
-    @Override
-    public JSONObject getStatus() throws JSONException {
-        ClusterAdminClient clusterAdminClient = transportClient.admin().cluster();
-        ClusterHealthResponse healths = clusterAdminClient.prepareHealth().get();
-
-        JSONObject status = new JSONObject();
-        status.put("clusterName", healths.getClusterName());
-        status.put("status", healths.getStatus().name());
-
-        return status;
-    }
-
-    @Override
-    public boolean testConnection() {
-        boolean connectionValid = true;
-        try {
-            //If we do not through an exception that means the cluster node is available.
-            transportClient.admin().cluster().prepareHealth().get();
-        } catch (NoNodeAvailableException ex) {
-            connectionValid = false;
-        }
-
-        return connectionValid;
-    }
-
-    @Override
-    public TransportClient getTransportClient() {
-        return transportClient;
-    }
-
-    @Override
-    public Object getClient() {
-        return transportClient;
     }
 
     private TransportClient newTransportClient(Settings.Builder settingsBuilder,
@@ -117,7 +76,9 @@ public class ElasticSearchXPackTransportClient implements TransportClientService
             }
         }
 
-        ChildFirstClassLoader childFirstClassLoader = new ChildFirstClassLoader(this.getClass().getClassLoader(), urls.toArray(new URL[0]));
+        if (childFirstClassLoader == null) {
+            childFirstClassLoader = new ChildFirstClassLoader(this.getClass().getClassLoader(), urls.toArray(new URL[0]));
+        }
 
         if (StringUtils.isNotBlank(transportClientProperties)) {
             String[] clientProperties = transportClientProperties.split(",");
@@ -141,4 +102,11 @@ public class ElasticSearchXPackTransportClient implements TransportClientService
         return null;
     }
 
+    @Override
+    public void close() {
+        super.close();
+        if (childFirstClassLoader != null) {
+            childFirstClassLoader = null;
+        }
+    }
 }
