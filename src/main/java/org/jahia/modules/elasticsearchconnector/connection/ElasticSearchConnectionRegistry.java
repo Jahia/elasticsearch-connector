@@ -47,6 +47,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.query.QueryResult;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
+
 import static org.jahia.modules.elasticsearchconnector.connection.ElasticSearchConnection.*;
 
 /**
@@ -58,6 +60,8 @@ import static org.jahia.modules.elasticsearchconnector.connection.ElasticSearchC
 public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionRegistry<ElasticSearchConnection> {
 
     private static Logger logger = LoggerFactory.getLogger(ElasticSearchConnectionRegistry.class);
+
+    protected static final Pattern IDENTIFIER_PATTERN = Pattern.compile("^[\\w]+[\\w\\-]+[\\w]+$");
 
     private DatabaseConnectorService databaseConnectorService = null;
 
@@ -124,26 +128,27 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
 
     @Override
     public void importConnection(Map<String, Object> map) {
+        String identifier = (String) map.get("identifier");
         try {
-            if (!ALPHA_NUMERIC_PATTERN.matcher((String)map.get("identifier")).matches()) {
+            if (!IDENTIFIER_PATTERN.matcher(identifier).matches()) {
                 map.put("status", "failed");
                 map.put("statusMessage", "invalidIdentifier");
                 //Create instance to be able to parse the options of a failed connection.
                 if (map.containsKey("options")) {
-                    ElasticSearchConnection connection = new ElasticSearchConnection((String) map.get("identifier"));
+                    ElasticSearchConnection connection = new ElasticSearchConnection(identifier);
                     map.put("options", map.containsKey("options") ? connection.parseOptions((LinkedHashMap) map.get("options")) : null);
                 }
-            } else if (databaseConnectorService.hasConnection((String) map.get("identifier"), (String) map.get("type"))) {
+            } else if (databaseConnectorService.hasConnection(identifier, (String) map.get("type"))) {
                 map.put("status", "failed");
                 map.put("statusMessage", "connectionExists");
                 //Create instance to be able to parse the options of a failed connection.
                 if (map.containsKey("options")) {
-                    ElasticSearchConnection connection = new ElasticSearchConnection((String) map.get("identifier"));
+                    ElasticSearchConnection connection = new ElasticSearchConnection(identifier);
                     map.put("options", map.containsKey("options") ? connection.parseOptions((LinkedHashMap) map.get("options")) : null);
                 }
             } else {
                 //Create connection object
-                ElasticSearchConnection connection = new ElasticSearchConnection((String) map.get("identifier"));
+                ElasticSearchConnection connection = new ElasticSearchConnection(identifier);
                 String host = map.containsKey("host") ? (String) map.get("host") : null;
                 Integer port = map.containsKey("port") ? Integer.parseInt((String) map.get("port")) : ElasticSearchConnection.DEFAULT_PORT;
                 Boolean isConnected = map.containsKey("isConnected") && Boolean.parseBoolean((String) map.get("isConnected"));
@@ -174,7 +179,7 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
             //try to parse options if the exist otherwise we will just remove them.
             try {
                 if (map.containsKey("options")) {
-                    ElasticSearchConnection connection = new ElasticSearchConnection((String) map.get("identifier"));
+                    ElasticSearchConnection connection = new ElasticSearchConnection(identifier);
                     map.put("options", map.containsKey("options") ? connection.parseOptions((LinkedHashMap) map.get("options")) : null);
                 }
             } catch (Exception e) {
