@@ -23,54 +23,90 @@
  */
 package org.jahia.modules.elasticsearchconnector.http;
 
-import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
-import org.elasticsearch.client.ClusterAdminClient;
-import org.elasticsearch.client.transport.NoNodeAvailableException;
+import org.apache.commons.lang.StringUtils;
+import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
-import org.jahia.modules.databaseConnector.services.ConnectionService;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
 
 /**
- * Created by stefan on 2017-05-30.
+ * This is a special client wrapper that uses a built-in class loader to avoid loading the X-Pack classes into the
+ * global class loader.
  */
-public class ElasticSearchXPackTransportClient extends PreBuiltXPackTransportClient implements TransportClientService, ConnectionService {
+public class ElasticSearchXPackTransportClient extends AbstractTransportClientService {
 
-    public ElasticSearchXPackTransportClient(Settings settings, Class<? extends Plugin>... plugins) {
-        super(settings, Arrays.asList(plugins));
+    private static final Logger logger = LoggerFactory.getLogger(ElasticSearchXPackTransportClient.class);
+
+    private ChildFirstClassLoader childFirstClassLoader = null;
+
+    public ElasticSearchXPackTransportClient(Settings.Builder settingsBuilder, String transportClientClassName,
+                                             String transportClientJarDirectory,
+                                             String transportClientProperties,
+                                             Class<? extends Plugin>... plugins) {
+        transportClient = newTransportClient(settingsBuilder, transportClientClassName, transportClientJarDirectory, transportClientProperties, plugins);
     }
 
-    @Override
-    public JSONObject getStatus() throws JSONException {
-        ClusterAdminClient clusterAdminClient = this.admin().cluster();
-        ClusterHealthResponse healths = clusterAdminClient.prepareHealth().get();
+    private TransportClient newTransportClient(Settings.Builder settingsBuilder,
+                                              String transportClientClassName,
+                                              String transportClientJarDirectory,
+                                              String transportClientProperties,
+                                              Class<? extends Plugin>... plugins) {
 
-        JSONObject status = new JSONObject();
-        status.put("clusterName", healths.getClusterName());
-        status.put("status", healths.getStatus().name());
+        ArrayList<URL> urls = new ArrayList<>();
+        File pluginLocationFile = new File(transportClientJarDirectory);
 
-        return status;
-    }
-
-    @Override
-    public boolean testConnection() {
-        boolean connectionValid = true;
-        try {
-            //If we do not through an exception that means the cluster node is available.
-            this.admin().cluster().prepareHealth().get();
-        } catch (NoNodeAvailableException ex) {
-            connectionValid = false;
+        File[] pluginLocationFiles = pluginLocationFile.listFiles();
+        if (pluginLocationFiles != null) {
+            for (File pluginFile : pluginLocationFiles) {
+                if (pluginFile.getName().toLowerCase().endsWith(".jar")) {
+                    try {
+                        urls.add(pluginFile.toURI().toURL());
+                    } catch (MalformedURLException e) {
+                        logger.error("Error adding plugin JAR URL", e);
+                    }
+                }
+            }
         }
 
-        return connectionValid;
+        if (childFirstClassLoader == null) {
+            childFirstClassLoader = new ChildFirstClassLoader(this.getClass().getClassLoader(), urls.toArray(new URL[0]));
+        }
+
+        if (StringUtils.isNotBlank(transportClientProperties)) {
+            String[] clientProperties = transportClientProperties.split(",");
+            if (clientProperties.length > 0) {
+                for (String clientProperty : clientProperties) {
+                    String[] clientPropertyParts = clientProperty.split("=");
+                    settingsBuilder.put(clientPropertyParts[0], clientPropertyParts[1]);
+                }
+            }
+        }
+
+        try {
+            Class<?> transportClientClass = childFirstClassLoader.loadClass(transportClientClassName);
+            Constructor<?> transportClientConstructor = transportClientClass.getConstructor(Settings.class, Class[].class);
+            return (TransportClient) transportClientConstructor.newInstance(settingsBuilder.build(), plugins);
+        } catch (ClassNotFoundException e) {
+            logger.error("Couldn't find class " + transportClientClassName, e);
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+            logger.error("Error creating transport client with class" + transportClientClassName, e);
+        }
+        return null;
     }
 
     @Override
-    public Object getClient() {
-        return this;
+    public void close() {
+        super.close();
+        if (childFirstClassLoader != null) {
+            childFirstClassLoader = null;
+        }
     }
 }

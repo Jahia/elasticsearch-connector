@@ -25,7 +25,6 @@ package org.jahia.modules.elasticsearchconnector.connection;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
-import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.jahia.modules.databaseConnector.connection.AbstractConnection;
@@ -40,13 +39,13 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.LinkedHashMap;
 
-import static org.jahia.modules.databaseConnector.util.Utils.DOUBLE_QUOTE;
-import static org.jahia.modules.databaseConnector.util.Utils.NEW_LINE;
-import static org.jahia.modules.databaseConnector.util.Utils.TABU;
+import static org.jahia.modules.databaseConnector.util.Utils.*;
 
 /**
  * 2017-05-17
@@ -65,15 +64,21 @@ public class ElasticSearchConnection extends AbstractConnection {
     public static final String DEFAULT_PING_TIMEOUT = "5s";
     public static final String DEFAULT_NODES_SAMPLER_INTERVAL = "5s";
     public static final boolean DEFAULT_IGNORE_CLUSTER_NAME = false;
+    public static final String DEFAULT_XPACK_TRANSPORTCLIENT_CLASSNAME = "org.elasticsearch.xpack.client.PreBuiltXPackTransportClient";
+    public static final String DEFAULT_XPACK_TRANSPORTCLIENT_JARDIRECTORY = "${karaf.data}/xpack";
+    public static final String DEFAULT_XPACK_TRANSPORTCLIENT_PROPERTIES = null;
 
     public static final String DATABASE_TYPE = "ELASTICSEARCH";
     public static final String DISPLAY_NAME = "ElasticSearchDB";
 
     private TransportClientService esTransportClient = null;
-    private Settings settings = null;
+    private Settings.Builder settingsBuilder = null;
+
+    private String transportClientClassName = DEFAULT_XPACK_TRANSPORTCLIENT_CLASSNAME;
+    private String transportClientJarDirectory = DEFAULT_XPACK_TRANSPORTCLIENT_JARDIRECTORY;
+    private String transportClientProperties = DEFAULT_XPACK_TRANSPORTCLIENT_PROPERTIES;
 
     private String clusterName = null;
-
 
     public ElasticSearchConnection(String id) {
         this.id = id;
@@ -89,6 +94,18 @@ public class ElasticSearchConnection extends AbstractConnection {
 
     private void prepareSettings() {
         //Add any other settings here
+        File karafDataDir = new File(System.getProperty("karaf.data"));
+        if (karafDataDir.exists()) {
+            File xpackJarDir = new File(karafDataDir, "x-pack");
+            if (xpackJarDir.exists()) {
+                try {
+                    transportClientJarDirectory = xpackJarDir.getCanonicalPath();
+                } catch (IOException e) {
+                    logger.error("Error getting canonical path for X-Pack JAR directory " + xpackJarDir, e);
+                }
+            }
+        }
+
         Settings.Builder builder = Settings.builder();
         builder.put("cluster.name", this.clusterName != null ? this.clusterName : DEFAULT_CLUSTER_NAME);
 
@@ -106,10 +123,10 @@ public class ElasticSearchConnection extends AbstractConnection {
                 logger.warn("Failed to parse options for ElasticSearch connection with id: " + this.id + " " + ex.getMessage());
             }
         }
-        settings = builder.build();
+        settingsBuilder = builder;
     }
 
-    private void addAdditionalTransportClients(TransportClientService estc) {
+    private void addAdditionalTransportClients(TransportClientService transportClientService) {
         //Add any additional transport addresses, that may be specified in advanced options
         if (!StringUtils.isEmpty(options)) {
             try {
@@ -125,7 +142,7 @@ public class ElasticSearchConnection extends AbstractConnection {
                         }
                         try {
                             if (host != null) {
-                                ((TransportClient)estc).addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), Integer.valueOf(port)));
+                                transportClientService.getTransportClient().addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), Integer.valueOf(port)));
                             }
                         } catch (UnknownHostException ex) {
                             logger.warn("Unable to add additional transport address (" + host + ":" + port + ") for ElasticSearch connection with id: " + this.id + " " + ex.getMessage());
@@ -140,15 +157,15 @@ public class ElasticSearchConnection extends AbstractConnection {
 
     private TransportClientService createTransportClient() {
         prepareSettings();
-        TransportClientService estc = resolveClient();
+        TransportClientService transportClientService = resolveClient();
         try {
-            ((TransportClient)estc).addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), port != null ? port : DEFAULT_PORT));
+            transportClientService.getTransportClient().addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), port != null ? port : DEFAULT_PORT));
         } catch (UnknownHostException ex) {
             logger.error("Failed to add transport address (" + host + ":" + port + ") for ElasticSearch connection with id: " + this.id + " " + ex.getMessage());
         }
         //Add any additional addresses that may be configured in the advanced settings.
-        addAdditionalTransportClients(estc);
-        return estc;
+        addAdditionalTransportClients(transportClientService);
+        return transportClientService;
     }
 
     @Override
@@ -224,19 +241,19 @@ public class ElasticSearchConnection extends AbstractConnection {
     @Override
     public void beforeUnregisterAsService() {
         if (esTransportClient != null) {
-            ((TransportClient)esTransportClient).close();
+            esTransportClient.close();
         }
     }
 
     @Override
     public boolean testConnectionCreation() {
-        TransportClientService estc = null;
+        TransportClientService transportClientService = null;
         try {
-            estc = createTransportClient();
-            return estc.testConnection();
+            transportClientService = createTransportClient();
+            return transportClientService.testConnection();
         } finally {
-            if (estc != null) {
-                ((TransportClient)estc).close();
+            if (transportClientService != null) {
+                transportClientService.close();
             }
         }
     }
@@ -261,8 +278,8 @@ public class ElasticSearchConnection extends AbstractConnection {
         Gson gson = new Gson();
         JSONObject obj = null;
         try {
-            String version = ((TransportClient)esTransportClient).admin().cluster().prepareNodesInfo().all().get().getNodes().get(0).getVersion().toString();
-            obj = new JSONObject(gson.toJson(((TransportClient)esTransportClient).admin().cluster().prepareClusterStats().get()));
+            String version = esTransportClient.getTransportClient().admin().cluster().prepareNodesInfo().all().get().getNodes().get(0).getVersion().toString();
+            obj = new JSONObject(gson.toJson(esTransportClient.getTransportClient().admin().cluster().prepareClusterStats().get()));
             JSONObject aboutConnection = new JSONObject();
             aboutConnection.put("host", this.host);
             aboutConnection.put("port", this.port);
@@ -296,6 +313,7 @@ public class ElasticSearchConnection extends AbstractConnection {
     }
 
     private TransportClientService resolveClient() {
-        return StringUtils.isNotEmpty(user) ? new ElasticSearchXPackTransportClient(settings) : new ElasticSearchTransportClient(settings);
+        return StringUtils.isNotEmpty(user) ? new ElasticSearchXPackTransportClient(settingsBuilder, transportClientClassName, transportClientJarDirectory, transportClientProperties) : new ElasticSearchTransportClient(settingsBuilder);
     }
+
 }

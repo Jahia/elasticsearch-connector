@@ -120,7 +120,7 @@
         <dependency>
             <groupId>org.jahia.modules</groupId>
             <artifactId>database-connector</artifactId>
-            <version>1.0.2</version>
+            <version>1.0.4-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -285,8 +285,8 @@
                         <JAX-RS-Application>org.jahia.modules.elasticsearchconnector.api.ECApiApplication</JAX-RS-Application>
                         <Import-Package>
                             com.unboundid.util;resolution:=optional,
-                            org.elasticsearch.xpack;resolution:=optional,
-                            org.elasticsearch.xpack.client;resolution:=optional,
+                            !org.elasticsearch.xpack.*,
+                            !org.elasticsearch.xpack.client.*,
                             org.jahia.modules.databaseConnector.api.filters,
                             org.jahia.modules.databaseConnector.services,
                             org.jahia.modules.databaseConnector.connection,
@@ -298,6 +298,7 @@
                             *
                         </Import-Package>
                         <Export-Package>
+                            !org.elasticsearch.xpack.*,
                             org.elasticsearch.*,
                             com.carrotsearch.hppc.*,
                             org.apache.lucene.search.join.*,
