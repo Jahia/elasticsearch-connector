@@ -108,16 +108,6 @@ public class ElasticSearchConnection extends AbstractConnection {
      */
     public ElasticSearchConnection(String id) {
         this.id = id;
-
-        final DefaultConnectingIOReactor ioReactor;
-        try {
-            ioReactor = new DefaultConnectingIOReactor();
-            connectionManager = new PoolingNHttpClientConnectionManager(ioReactor);
-            connectionManager.setDefaultMaxPerRoute(10);
-            connectionManager.setMaxTotal(30);
-        } catch (IOReactorException ex) {
-            logger.error("Failed to create connection Manager due to: {}", ex.getMessage(), ex);
-        }
     }
 
     @Override
@@ -245,14 +235,16 @@ public class ElasticSearchConnection extends AbstractConnection {
             }
         }
 
-        if (connectionManager != null) {
+        if (getConnectionManager() != null) {
             try {
                 if (logger.isInfoEnabled()) {
-                    logger.info("Shutting down underlying connection manager,\n statistics {}", connectionManager.getTotalStats());
+                    logger.info("Shutting down underlying connection manager,\n statistics {}", getConnectionManager().getTotalStats());
                 }
-                connectionManager.shutdown();
+                getConnectionManager().shutdown();
             } catch (IOException e) {
                 logger.error(e.getMessage(), e);
+            } finally {
+                connectionManager = null;
             }
         }
     }
@@ -394,8 +386,8 @@ public class ElasticSearchConnection extends AbstractConnection {
                         .setConnectTimeout(30000)
                         .setSocketTimeout(60000 * 5));
 
-        if (!testingOnly && connectionManager != null) {
-            builder.setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setConnectionManager(connectionManager)
+        if (!testingOnly && getConnectionManager() != null) {
+            builder.setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setConnectionManager(getConnectionManager())
                                                                               .setDefaultIOReactorConfig(IOReactorConfig.custom().setTcpNoDelay(false).build()));
         }
         //If SSL or security is enabled handle the configuration
@@ -450,6 +442,21 @@ public class ElasticSearchConnection extends AbstractConnection {
         } catch (GeneralSecurityException ex) {
             logger.error("Failed to configure SSL context when configuring ES Rest Client", ex);
         }
+    }
+
+    private PoolingNHttpClientConnectionManager getConnectionManager() {
+        if (connectionManager == null ) {
+            final DefaultConnectingIOReactor ioReactor;
+            try {
+                ioReactor = new DefaultConnectingIOReactor();
+                connectionManager = new PoolingNHttpClientConnectionManager(ioReactor);
+                connectionManager.setDefaultMaxPerRoute(10);
+                connectionManager.setMaxTotal(30);
+            } catch (IOReactorException ex) {
+                logger.error("Failed to create connection Manager due to: {}", ex.getMessage(), ex);
+            }
+        }
+        return connectionManager;
     }
 
     private class ElasticsearchClientSettings {
