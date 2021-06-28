@@ -8,7 +8,7 @@
  * JAHIA'S ENTERPRISE DISTRIBUTIONS LICENSING - IMPORTANT INFORMATION
  * ==========================================================================================
  *
- *     Copyright (C) 2002-2019 Jahia Solutions Group. All rights reserved.
+ *     Copyright (C) 2002-2020 Jahia Solutions Group. All rights reserved.
  *
  *     This file is part of a Jahia's Enterprise Distribution.
  *
@@ -35,22 +35,18 @@ import org.jahia.modules.databaseConnector.connection.ConnectionData;
  */
 
 public class ElasticSearchConnectionData extends ConnectionData {
+    private static final long serialVersionUID = 1;
 
-    private String clusterName = null;
-
+    /**
+     * Instantiate a new Elasticsearch Connection with the specified identifier
+     * @param id the identifier of the instance
+     */
     public ElasticSearchConnectionData(String id) {
         this.id = id;
     }
 
-    public String getClusterName() {
-        return clusterName;
-    }
-
-    public void setClusterName(String clusterName) {
-        this.clusterName = clusterName;
-    }
-
     @JsonIgnore
+    @Override
     public String getJson() {
         ObjectMapper mapper = new ObjectMapper();
         final JsonNode jsonElasticSearchConnectionData = mapper.valueToTree(this);

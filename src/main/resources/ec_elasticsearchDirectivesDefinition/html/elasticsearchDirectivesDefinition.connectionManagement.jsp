@@ -1,5 +1,8 @@
 <dc-spinner spinner-mode="cecc.spinnerOptions.mode" show="cecc.spinnerOptions.showSpinner"></dc-spinner>
 <md-content layout-padding>
+    <span ng-show="elasticsearchAdvancedForm.$invalid"
+          message-key="ec_elasticsearchConnector.label.needPassword"
+          style="color: crimson; font-size: 10pt"></span>
     <md-tabs md-dynamic-height md-border-bottom>
         <md-tab label="{{cecc.tabLabels.settings}}">
             <form name="elasticsearchForm">
@@ -9,17 +12,6 @@
                                  class="md-warn md-align-top-left" flex>
                         <span class="ipsum" message-key="dc_databaseConnector.label.connection.enableConnection"></span>
                     </md-checkbox>
-
-                    <md-button class="md-fab md-mini md-success float-right center-content"
-                               ng-click="cecc.testElasticSearchConnection()"
-                               ng-disabled="elasticsearchForm.$invalid || elasticsearchAdvancedForm.$invalid">
-                        <i class="material-icons">check_circle</i>
-                        <md-tooltip class="noToolTipAnimation"
-                                    md-direction="top"
-                                    md-delay="500">
-                            <span message-key="dc_databaseConnector.label.connection.testConnection"></span>
-                        </md-tooltip>
-                    </md-button>
                     <md-input-container class="md-block" flex-gt-sm="1">
                         <label message-key="ec_elasticsearchConnector.label.host"></label>
                         <input title="host" required ng-minlength="4" name="host"
@@ -62,20 +54,6 @@
                             </div>
                         </div>
                     </md-input-container>
-
-                    <md-input-container class="md-block">
-                        <label message-key="ec_elasticsearchConnector.label.clusterName"></label>
-                        <input title="Database Name" md-maxlength="30" required ng-pattern="/^[\w]+[\w\-]+[\w]+$/"
-                               name="clusterName"
-                               ng-model="cecc.connection.clusterName">
-                        <div ng-messages="elasticsearchForm.clusterName.$error">
-                            <div ng-message-exp="validationName"
-                                 ng-repeat="(validationName, validationMessage) in cecc.validations.clusterName"
-                                 ng-class="{'showErrorMessages': elasticsearchForm.clusterName.$invalid && elasticsearchForm.clusterName.$touched}">
-                                {{validationMessage}}
-                            </div>
-                        </div>
-                    </md-input-container>
                 </md-content>
             </form>
         </md-tab>
@@ -85,7 +63,7 @@
                 <form name="elasticsearchAdvancedForm">
                     <!-- ***START*  XPACK SECURITY OPTIONS -->
                     <md-subheader class=" md-no-sticky">
-                        <span message-key="ec_elasticsearchConnector.label.modal.elasticsearch.useXPackSecurity"></span>
+                        <span message-key="ec_elasticsearchConnector.label.modal.elasticsearch.useSecurity"></span>
                         <md-checkbox class="float-right"
                                      ng-model="cecc.connection.options.useXPackSecurity"
                                      ng-true-value="true"
@@ -93,7 +71,14 @@
                                      ng-change="cecc.updateXPackSecurity()">
                         </md-checkbox>
                     </md-subheader>
-                    <md-input-container class="md-block col-md-offset-2" ng-if="cecc.connection.options.useXPackSecurity">
+                    <md-switch ng-if="cecc.connection.options.useXPackSecurity"
+                               ng-model="cecc.connection.options.useEncryption"
+                               md-invert
+                               aria-label="Use encryption">
+                        <label style="color:rgba(0,0,0,0.54);">{{cecc.getEncryptionMessage()}}</label>
+                    </md-switch>
+                    <md-input-container class="md-block col-md-offset-2"
+                                        ng-if="cecc.connection.options.useXPackSecurity">
                         <label message-key="ec_elasticsearchConnector.label.user"></label>
                         <input title="User" name="user" required ng-minlength="4" md-maxlength="30"
                                ng-model="cecc.connection.user"
@@ -108,7 +93,8 @@
                         </div>
                     </md-input-container>
 
-                    <md-input-container class="md-block col-md-offset-2" ng-if="!cecc.isEmpty.user && cecc.connection.options.useXPackSecurity">
+                    <md-input-container class="md-block col-md-offset-2"
+                                        ng-if="!cecc.isEmpty.user && cecc.connection.options.useXPackSecurity">
                         <label message-key="ec_elasticsearchConnector.label.password"></label>
                         <input title="Password" type="password" name="password" ng-model="cecc.connection.password"
                                required ng-minlength="4" md-maxlength="30"
@@ -125,69 +111,55 @@
                     <%--<md-divider></md-divider>--%>
                     <!-- ***START*  TRANSPORT OPTIONS -->
                     <md-subheader class="md-no-sticky">
-                        <span message-key="ec_elasticsearchConnector.label.modal.transportSettings"></span>
+                        <span message-key="ec_elasticsearchConnector.label.modal.networkSettings"></span>
                     </md-subheader>
                     <md-input-container class="md-block col-md-offset-2">
-                        <label message-key="ec_elasticsearchConnector.label.modal.elasticsearch.ignoreClusterName"></label>
-                        <md-checkbox class="float-right"
-                                     style="padding-right:13px;"
-                                     ng-model="cecc.connection.options.transport.ignoreClusterName"
-                                     ng-true-value="true"
-                                     ng-false-value="false">
-                        </md-checkbox>
-                    </md-input-container>
-                    <md-input-container class="md-block col-md-offset-2">
-                        <label message-key="ec_elasticsearchConnector.label.modal.elasticsearch.pingTimeout"></label>
-                        <input title="Connect Timeout" name="pingTimeout"
-                               ng-pattern="/^[0-9]+[a-z]{1}$/"
-                               ng-model="cecc.connection.options.transport.pingTimeout">
-                        <div ng-messages="elasticsearchAdvancedForm.pingTimeout.$error">
+                        <label message-key="ec_elasticsearchConnector.label.modal.elasticsearch.nodesSnifferInterval"></label>
+                        <input title="Nodes Sampler Interval" name="nodesSnifferInterval"
+                               ng-pattern="/^[0-9]+[s|m]{1}$/"
+                               ng-model="cecc.connection.options.nodesSnifferInterval">
+                        <md-icon class="md-secondary"
+                                 title="Sniffer documentation">
+                            <a target="_blank"
+                               href="https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/_usage.html">
+                                <i class="material-icons">help_outline</i>
+                            </a>
+                        </md-icon>
+                        <div ng-messages="elasticsearchAdvancedForm.nodesSnifferInterval.$error">
                             <div ng-message-exp='validationName'
-                                 ng-repeat="(validationName, validationMessage) in cecc.validations.pingTimeout"
-                                 ng-class="{'showErrorMessages': elasticsearchAdvancedForm.pingTimeout.$invalid && elasticsearchAdvancedForm.pingTimeout.$touched}">
-                                {{validationMessage}}
-                            </div>
-                        </div>
-                    </md-input-container>
-                    <md-input-container class="md-block col-md-offset-2">
-                        <label message-key="ec_elasticsearchConnector.label.modal.elasticsearch.nodesSamplerInterval"></label>
-                        <input title="Nodes Sampler Interval" name="nodesSamplerInterval"
-                               ng-pattern="/^[0-9]+[a-z]{1}$/"
-                               ng-model="cecc.connection.options.transport.nodesSamplerInterval">
-                        <div ng-messages="elasticsearchAdvancedForm.nodesSamplerInterval.$error">
-                            <div ng-message-exp='validationName'
-                                 ng-repeat="(validationName, validationMessage) in cecc.validations.nodesSamplerInterval"
-                                 ng-class="{'showErrorMessages': elasticsearchAdvancedForm.nodesSamplerInterval.$invalid && elasticsearchAdvancedForm.nodesSamplerInterval.$touched}">
+                                 ng-repeat="(validationName, validationMessage) in cecc.validations.nodesSnifferInterval"
+                                 ng-class="{'showErrorMessages': elasticsearchAdvancedForm.nodesSnifferInterval.$invalid && elasticsearchAdvancedForm.nodesSnifferInterval.$touched}">
                                 {{validationMessage}}
                             </div>
                         </div>
                     </md-input-container>
                     <!-- ***END*  TRANSPORT OPTIONS -->
-                    <md-divider></md-divider>
+                    <%--                    <md-divider></md-divider>--%>
 
-                    <!-- ***START*  ADDITIONAL TRANSPORT ADDRESSES OPTION -->
+                    <!-- ***START*  ADDITIONAL HOST ADDRESSES OPTION -->
                     <md-subheader class=" md-no-sticky">
-                        <span message-key="ec_elasticsearchConnector.label.modal.elasticsearch.additionalTransportAddresses"></span>
+                        <span message-key="ec_elasticsearchConnector.label.modal.elasticsearch.additionalHostAddresses"></span>
                         <md-checkbox class="float-right"
-                                     ng-model="cecc.enableAdditionalTransportAddresses"
+                                     ng-model="cecc.enableAdditionalHostAddresses"
                                      ng-true-value="true"
                                      ng-false-value="false"
-                                     ng-change="cecc.updateTransportAddressesOptions()">
+                                     ng-change="cecc.updateHostAddressesOptions()">
                         </md-checkbox>
                     </md-subheader>
-                    <div ng-if="cecc.enableAdditionalTransportAddresses">
+                    <div ng-if="cecc.enableAdditionalHostAddresses">
                         <md-list>
-                            <md-list-item ng-repeat="transportAddress in cecc.connection.options.additionalTransportAddresses track by $index "
-                                          layout-margin layout-padding layout-fill layout-wrap="" class="box-wrap2">
+                            <md-list-item
+                                    ng-repeat="hostAddress in cecc.connection.options.additionalHostAddresses track by $index "
+                                    layout-margin layout-padding layout-fill layout-wrap="" class="box-wrap2">
                                 <md-input-container class="md-block" layout="flex">
                                     <label message-key="ec_elasticsearchConnector.label.host"></label>
-                                    <input title="transportAddressHost" class="md-primary" required
-                                           name="transportAddressHost_{{$index}}"
-                                           ng-model="transportAddress.host">
-                                    <div ng-messages="elasticsearchAdvancedForm['transportAddressHost_' + $index].$error">
+                                    <input title="hostAddressHost" class="md-primary" required
+                                           name="hostAddressHost_{{$index}}"
+                                           ng-model="hostAddress.host">
+                                    <div ng-messages="elasticsearchAdvancedForm['hostAddressHost_' + $index].$error">
                                         <div ng-message-exp='validationName'
-                                             ng-repeat="(validationName, validationMessage) in cecc.validations.transportAddress.host"
-                                             ng-class="{'showErrorMessages': elasticsearchAdvancedForm['transportAddressHost_' + $index].$invalid && elasticsearchAdvancedForm['transportAddressHost_' + $index].$touched}">
+                                             ng-repeat="(validationName, validationMessage) in cecc.validations.hostAddress.host"
+                                             ng-class="{'showErrorMessages': elasticsearchAdvancedForm['hostAddressHost_' + $index].$invalid && elasticsearchAdvancedForm['hostAddressHost_' + $index].$touched}">
                                             {{validationMessage}}
                                         </div>
                                     </div>
@@ -195,35 +167,35 @@
                                 :
                                 <md-input-container class="md-block" layout="flex">
                                     <label message-key="dc_databaseConnector.label.port"></label>
-                                    <input title="transportAddressPort" class="md-primary"
-                                           name="transportAddressPort_{{$index}}"
+                                    <input title="hostAddressPort" class="md-primary"
+                                           name="hostAddressPort_{{$index}}"
                                            ng-pattern="/^[0-9]*$/"
-                                           ng-model="transportAddress.port " length-parser length-parser-max="5" range-parser
+                                           ng-model="hostAddress.port " length-parser length-parser-max="5" range-parser
                                            range-max-value="65535">
-                                    <div ng-messages="elasticsearchAdvancedForm['transportAddressPort_' + $index].$error">
+                                    <div ng-messages="elasticsearchAdvancedForm['hostAddressPort_' + $index].$error">
                                         <div ng-message-exp='validationName'
-                                             ng-repeat="(validationName, validationMessage) in cecc.validations.transportAddress.port"
-                                             ng-class="{'showErrorMessages': elasticsearchAdvancedForm['transportAddressPort_' + $index].$invalid && elasticsearchAdvancedForm['transportAddressPort_' + $index].$touched}">
+                                             ng-repeat="(validationName, validationMessage) in cecc.validations.hostAddress.port"
+                                             ng-class="{'showErrorMessages': elasticsearchAdvancedForm['hostAddressPort_' + $index].$invalid && elasticsearchAdvancedForm['hostAddressPort_' + $index].$touched}">
                                             {{validationMessage}}
                                         </div>
                                     </div>
                                 </md-input-container>
                                 <md-icon class="md-secondary"
-                                         title="Remove Transport Address"
-                                         ng-click="cecc.removeTransportAddress($index)">
+                                         title="Remove Host Address"
+                                         ng-click="cecc.removeHostAddress($index)">
                                     <i class="material-icons">delete</i>
                                 </md-icon>
                             </md-list-item>
                             <md-list-item>
                                 <md-icon class="md-secondary"
-                                         title="Add Transport Address"
-                                         ng-click="cecc.addTransportAddress()">
+                                         title="Add Host Address"
+                                         ng-click="cecc.addHostAddress()">
                                     <i class="material-icons">add</i>
                                 </md-icon>
                             </md-list-item>
                         </md-list>
                     </div>
-                    <!-- ***END*  ADDITIONAL TRANSPORT ADDRESSES OPTION -->
+                    <!-- ***END*  ADDITIONAL HOST ADDRESSES OPTION -->
                 </form>
             </md-content>
         </md-tab>
@@ -246,7 +218,17 @@
                ng-click="cecc.updateImportedConnection()"
                message-key="dc_databaseConnector.label.ok">
     </md-button>
-    <md-button class="md-raised md-primary float-right"
+    <md-button class="md-raised md-primary float-right center-content"
+               ng-click="cecc.testElasticSearchConnection()"
+               ng-disabled="elasticsearchForm.$invalid || elasticsearchAdvancedForm.$invalid">
+        <span message-key="ec_elasticsearchConnector.label.test"></span>
+        <md-tooltip class="noToolTipAnimation"
+                    md-direction="top"
+                    md-delay="500">
+            <span message-key="dc_databaseConnector.label.connection.testConnection"></span>
+        </md-tooltip>
+    </md-button>
+    <md-button class="float-right"
                ng-click="cecc.cancel()">
         <span ng-if="cecc.mode=='edit' || cecc.mode=='create'"
               message-key="dc_databaseConnector.label.back"></span>

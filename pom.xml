@@ -10,7 +10,7 @@
     JAHIA'S ENTERPRISE DISTRIBUTIONS LICENSING - IMPORTANT INFORMATION
     ==========================================================================================
 
-        Copyright (C) 2002-2019 Jahia Solutions Group. All rights reserved.
+        Copyright (C) 2002-2020 Jahia Solutions Group. All rights reserved.
 
         This file is part of a Jahia's Enterprise Distribution.
 
@@ -29,11 +29,11 @@
     <parent>
         <artifactId>jahia-modules</artifactId>
         <groupId>org.jahia.modules</groupId>
-        <version>7.2.1.0</version>
+        <version>7.3.5.0</version>
     </parent>
     <artifactId>elasticsearch-connector</artifactId>
     <name>Elastic Search Connector</name>
-    <version>1.2.0-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <description>This is the custom module (ElasticSearch Connector) for running on a Digital Experience Manager server.</description>
 
@@ -47,11 +47,14 @@
     <properties>
         <jahia-module-type>system</jahia-module-type>
         <jahia-depends>default,siteSettings,serverSettings</jahia-depends>
+        <jahia-module-signature>MCwCFGDX7AgRtplz8wKRVDZydLhO3N/nAhQisQnP/WFaNSdfkFDTNdsuRLPBXg==</jahia-module-signature>
         <javaxws-annotations.version>1.1.1</javaxws-annotations.version>
         <jackson.version>2.9.0</jackson.version>
         <jersey.version>2.18</jersey.version>
         <jackson-annotations.version>2.9.0</jackson-annotations.version>
-        <elasticsearch.version>5.6.3</elasticsearch.version>
+        <elasticsearch.version>7.13.2</elasticsearch.version>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
     </properties>
     <repositories>
         <repository>
@@ -205,68 +208,69 @@
         <!-- **START** ELASTIC SEARCH DEPENDENCIES -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-            <version>2.8.2</version>
+            <artifactId>log4j-core</artifactId>
+            <version>2.11.2</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>2.8.2</version>
+            <artifactId>log4j-api</artifactId>
+            <version>2.11.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-to-slf4j</artifactId>
+            <version>2.11.2</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
-            <version>6.6.1</version>
+            <version>8.8.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-highlighter</artifactId>
+            <version>8.8.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.lucene</groupId>
+                    <artifactId>lucene-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.lucene</groupId>
+                    <artifactId>lucene-memory</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.lucene</groupId>
+                    <artifactId>lucene-queries</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5.3</version>
+            <version>4.5.10</version>
         </dependency>
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
-            <version>2.9.9</version>
+            <version>2.10.10</version>
         </dependency>
         <dependency>
             <groupId>com.carrotsearch</groupId>
             <artifactId>hppc</artifactId>
-            <version>0.7.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.elasticsearch.plugin</groupId>
-            <artifactId>x-pack-api</artifactId>
-            <version>${elasticsearch.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>elasticsearch</artifactId>
-            <version>${elasticsearch.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.logging.log4j</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
+            <version>0.8.1</version>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
-            <artifactId>transport</artifactId>
+            <artifactId>elasticsearch-rest-client-sniffer</artifactId>
             <version>${elasticsearch.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.logging.log4j</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
-            <artifactId>x-pack-transport</artifactId>
+            <artifactId>elasticsearch-rest-high-level-client</artifactId>
             <version>${elasticsearch.version}</version>
-            <scope>provided</scope>
         </dependency>
+
         <!-- **END** ELASTIC SEARCH DEPENDENCIES -->
     </dependencies>
     <build>
@@ -275,6 +279,14 @@
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <extensions>true</extensions>
+                <version>4.2.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>biz.aQute.bnd</groupId>
+                        <artifactId>biz.aQute.bndlib</artifactId>
+                        <version>4.2.0</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
                     <instructions>
                         <_invalidfilenames>CON(\..+)?|PRN(\..+)?|AUX(\..+)?|NUL(\..+)?|COM[1-9](\..+)?|LPT[1-9](\..+)?|\$Mft|\$MftMirr|\$LogFile|\$Volume|\$AttrDef|\$Bitmap|\$Boot|\$BadClus|\$Secure|\$Upcase|\$Extend|\$Quota|\$ObjId|\$Reparse</_invalidfilenames>
@@ -300,9 +312,12 @@
                         <Export-Package>
                             !org.elasticsearch.xpack.*,
                             org.elasticsearch.*,
+                            org.elasticsearch,
                             com.carrotsearch.hppc.*,
                             org.apache.lucene.search.join.*,
-                            org.jahia.modules.elasticsearchconnector.http,
+                            org.apache.lucene.search.*,
+                            org.apache.lucene.util.*,
+                            org.jahia.modules.elasticsearchconnector.rest,
                             org.jahia.modules.elasticsearchconnector.connection
                         </Export-Package>
                     </instructions>

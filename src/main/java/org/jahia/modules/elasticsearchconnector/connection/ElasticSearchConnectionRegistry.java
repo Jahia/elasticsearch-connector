@@ -8,7 +8,7 @@
  * JAHIA'S ENTERPRISE DISTRIBUTIONS LICENSING - IMPORTANT INFORMATION
  * ==========================================================================================
  *
- *     Copyright (C) 2002-2019 Jahia Solutions Group. All rights reserved.
+ *     Copyright (C) 2002-2020 Jahia Solutions Group. All rights reserved.
  *
  *     This file is part of a Jahia's Enterprise Distribution.
  *
@@ -29,6 +29,7 @@ import org.jahia.modules.databaseConnector.connection.AbstractDatabaseConnection
 import org.jahia.modules.databaseConnector.services.DatabaseConnectionRegistry;
 import org.jahia.modules.databaseConnector.services.DatabaseConnectorService;
 import org.jahia.modules.databaseConnector.util.Utils;
+import org.jahia.modules.elasticsearchconnector.ESConstants;
 import org.jahia.modules.elasticsearchconnector.api.ECApi;
 import org.jahia.services.content.JCRCallback;
 import org.jahia.services.content.JCRNodeWrapper;
@@ -49,7 +50,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import static org.jahia.modules.elasticsearchconnector.connection.ElasticSearchConnection.*;
+import static org.jahia.modules.elasticsearchconnector.connection.ElasticSearchConnection.NODE_TYPE;
 
 /**
  * 2017-05-17
@@ -61,14 +62,22 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
 
     private static Logger logger = LoggerFactory.getLogger(ElasticSearchConnectionRegistry.class);
 
-    protected static final Pattern IDENTIFIER_PATTERN = Pattern.compile("^[\\w]+[\\w\\-]+[\\w]+$");
+    static final Pattern IDENTIFIER_PATTERN = Pattern.compile("^[\\w]+[\\w\\-]+[\\w]+$");
 
     private DatabaseConnectorService databaseConnectorService = null;
 
+    /**
+     * Instantiate a new Registry
+     */
     public ElasticSearchConnectionRegistry() {
         super();
     }
 
+    /**
+     * Activation method called when bundle is activated
+     *
+     * @param context BundleContext of teh current OSGI context
+     */
     @Activate
     public void activate(BundleContext context) {
         this.context = context;
@@ -77,11 +86,21 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
         this.registerServices();
     }
 
+    /**
+     * Deactivation method called when bundle is deactivated
+     *
+     * @param context BundleContext of teh current OSGI context
+     */
     @Deactivate
     public void deactivate(BundleContext context) {
         this.closeConnections();
     }
 
+    /**
+     * Inject Database Connector service
+     *
+     * @param databaseConnectorService the injected service
+     */
     @Reference(cardinality = ReferenceCardinality.MANDATORY, policy = ReferencePolicy.STATIC, service = DatabaseConnectorService.class)
     public void setDatabaseConnectorService(DatabaseConnectorService databaseConnectorService) {
         this.databaseConnectorService = databaseConnectorService;
@@ -117,8 +136,7 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
 
     @Override
     protected void storeAdvancedConfig(AbstractConnection connection, JCRNodeWrapper node) throws RepositoryException {
-        ElasticSearchConnection elasticSearchConnection = (ElasticSearchConnection) connection;
-        node.setProperty(ElasticSearchConnection.CLUSTER_NAME_PROPERTY, elasticSearchConnection.getClusterName());
+        // Historically bad interface design will be fixed in next Major overhaul
     }
 
     @Override
@@ -128,65 +146,57 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
 
     @Override
     public void importConnection(Map<String, Object> map) {
-        String identifier = (String) map.get("identifier");
+        String identifier = (String) map.get(ESConstants.IDENTIFIERKEY);
         try {
             if (!IDENTIFIER_PATTERN.matcher(identifier).matches()) {
-                map.put("status", "failed");
-                map.put("statusMessage", "invalidIdentifier");
+                map.put(ESConstants.STATUSKEY, ESConstants.FAILED);
+                map.put(ESConstants.STATUS_MESSAGEKEY, "invalidIdentifier");
                 //Create instance to be able to parse the options of a failed connection.
-                if (map.containsKey("options")) {
+                if (map.containsKey(ESConstants.OPTIONSKEY)) {
                     ElasticSearchConnection connection = new ElasticSearchConnection(identifier);
-                    map.put("options", map.containsKey("options") ? connection.parseOptions((LinkedHashMap) map.get("options")) : null);
+                    map.put(ESConstants.OPTIONSKEY, connection.parseOptions((LinkedHashMap) map.get(ESConstants.OPTIONSKEY)));
                 }
             } else if (databaseConnectorService.hasConnection(identifier, (String) map.get("type"))) {
-                map.put("status", "failed");
-                map.put("statusMessage", "connectionExists");
+                map.put(ESConstants.STATUSKEY, ESConstants.FAILED);
+                map.put(ESConstants.STATUS_MESSAGEKEY, "connectionExists");
                 //Create instance to be able to parse the options of a failed connection.
-                if (map.containsKey("options")) {
+                if (map.containsKey(ESConstants.OPTIONSKEY)) {
                     ElasticSearchConnection connection = new ElasticSearchConnection(identifier);
-                    map.put("options", map.containsKey("options") ? connection.parseOptions((LinkedHashMap) map.get("options")) : null);
+                    map.put(ESConstants.OPTIONSKEY, connection.parseOptions((LinkedHashMap) map.get(ESConstants.OPTIONSKEY)));
                 }
             } else {
-                //Create connection object
-                ElasticSearchConnection connection = new ElasticSearchConnection(identifier);
-                String host = map.containsKey("host") ? (String) map.get("host") : null;
-                Integer port = map.containsKey("port") ? Integer.parseInt((String) map.get("port")) : ElasticSearchConnection.DEFAULT_PORT;
-                Boolean isConnected = map.containsKey("isConnected") && Boolean.parseBoolean((String) map.get("isConnected"));
-                String clusterName = map.containsKey("clusterName") ? (String) map.get("clusterName") : ElasticSearchConnection.DEFAULT_CLUSTER_NAME;
-                String username = map.containsKey("user") ? (String) map.get("user") : null;
-                String options = map.containsKey("options") ? connection.parseOptions((LinkedHashMap) map.get("options")) : null;
-                map.put("options", options);
-                String password = (String) map.get("password");
-
-                password = databaseConnectorService.setPassword(map, password);
-
-                connection.setHost(host);
-                connection.setPort(port);
-                connection.isConnected(isConnected);
-                connection.setClusterName(clusterName);
-                connection.setPassword(password);
-                connection.setOptions(options);
-                connection.setUser(username);
-                connection.setPassword(password);
-
-                addEditConnection(connection, false);
-                map.put("status", "success");
+                createConnectionFromImportedMap(map, identifier);
             }
 
         } catch (Exception ex) {
-            map.put("status", "failed");
-            map.put("statusMessage", "creationFailed");
-            //try to parse options if the exist otherwise we will just remove them.
-            try {
-                if (map.containsKey("options")) {
-                    ElasticSearchConnection connection = new ElasticSearchConnection(identifier);
-                    map.put("options", map.containsKey("options") ? connection.parseOptions((LinkedHashMap) map.get("options")) : null);
-                }
-            } catch (Exception e) {
-                map.remove("options");
+            map.put(ESConstants.STATUSKEY, ESConstants.FAILED);
+            map.put(ESConstants.STATUS_MESSAGEKEY, "creationFailed");
+            if (map.containsKey(ESConstants.OPTIONSKEY) && map.get(ESConstants.OPTIONSKEY) instanceof LinkedHashMap) {
+                ElasticSearchConnection connection = new ElasticSearchConnection(identifier);
+                map.put(ESConstants.OPTIONSKEY, connection.parseOptions((LinkedHashMap) map.get(ESConstants.OPTIONSKEY)));
             }
-            logger.info("Import " + (map.containsKey("identifier") ? "for connection: '" + map.get("identifier") + "'" : "") + " failed", ex.getMessage(), ex);
+            logger.error("Import of {} failed with {}", new Object[]{identifier, ex.getMessage()}, ex);
         }
+    }
+
+    private void createConnectionFromImportedMap(Map<String, Object> map, String identifier) {
+        //Create connection object
+        ElasticSearchConnection connection = new ElasticSearchConnection(identifier);
+        String host = map.containsKey("host") ? (String) map.get("host") : null;
+        Integer port = map.containsKey("port") ? Integer.parseInt((String) map.get("port")) : ElasticSearchConnection.DEFAULT_PORT;
+        Boolean isConnected = map.containsKey(ESConstants.IS_CONNECTED) && Boolean.parseBoolean((String) map.get(ESConstants.IS_CONNECTED));
+        String username = map.containsKey("user") ? (String) map.get("user") : null;
+        String options = map.containsKey(ESConstants.OPTIONSKEY) ? connection.parseOptions((LinkedHashMap) map.get(ESConstants.OPTIONSKEY)) : null;
+        map.put(ESConstants.OPTIONSKEY, options);
+
+        connection.setHost(host);
+        connection.setPort(port);
+        connection.isConnected(isConnected);
+        connection.setOptions(options);
+        connection.setUser(username);
+
+        addEditConnection(connection, false);
+        map.put(ESConstants.STATUSKEY, "success");
     }
 
     @Override
@@ -207,8 +217,9 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
     @Override
     public Map<String, Object> prepareConnectionMapFromJSON(Map<String, Object> result, JSONObject jsonConnectionData) throws JSONException {
         JSONArray missingParameters = new JSONArray();
-        if (jsonConnectionData.has("reImport")) {
-            result.put("reImport", jsonConnectionData.getString("reImport"));
+        String reImportKey = "reImport";
+        if (jsonConnectionData.has(reImportKey)) {
+            result.put(reImportKey, jsonConnectionData.getString(reImportKey));
         }
         if (!jsonConnectionData.has("id") || StringUtils.isEmpty(jsonConnectionData.getString("id"))) {
             missingParameters.put("id");
@@ -217,34 +228,36 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
             missingParameters.put("host");
         }
         if (missingParameters.length() > 0) {
-            result.put("connectionStatus", "failed");
+            result.put("connectionStatus", ESConstants.FAILED);
         } else {
-            String id = jsonConnectionData.getString("id");
-            String host = jsonConnectionData.getString("host");
-            Integer port = jsonConnectionData.has("port") && !StringUtils.isEmpty(jsonConnectionData.getString("port")) ? jsonConnectionData.getInt("port") : null;
-            Boolean isConnected = jsonConnectionData.has("isConnected") && jsonConnectionData.getBoolean("isConnected");
-            String clusterName  = jsonConnectionData.has("clusterName") ? jsonConnectionData.getString("clusterName") : ElasticSearchConnection.DEFAULT_CLUSTER_NAME;
-            String options = jsonConnectionData.has("options") ? jsonConnectionData.getString("options") : null;
-            String password = jsonConnectionData.has("password") ? jsonConnectionData.getString("password") : null;
-            String user = jsonConnectionData.has("user") ? jsonConnectionData.getString("user") : null;
-
-            ElasticSearchConnection connection = new ElasticSearchConnection(id);
-
-            connection.setHost(host);
-            connection.setPort(port);
-            connection.setUser(user);
-            connection.isConnected(isConnected);
-            connection.setClusterName(clusterName);
-            if (password != null && password.contains("_ENC")) {
-                password = password.substring(0, 32);
-                password = EncryptionUtils.passwordBaseDecrypt(password);
-            }
-            connection.setPassword(password);
-            connection.setOptions(options);
-            result.put("connectionStatus", "success");
-            result.put("connection", connection);
+            createConnectionFromJSON(result, jsonConnectionData);
         }
         return result;
+    }
+
+    private void createConnectionFromJSON(Map<String, Object> result, JSONObject jsonConnectionData) throws JSONException {
+        String id = jsonConnectionData.getString("id");
+        String host = jsonConnectionData.getString("host");
+        Integer port = !StringUtils.isEmpty(jsonConnectionData.getString("port")) ? jsonConnectionData.getInt("port") : null;
+        Boolean isConnected = jsonConnectionData.has(ESConstants.IS_CONNECTED) && jsonConnectionData.getBoolean(ESConstants.IS_CONNECTED);
+        String options = jsonConnectionData.has(ESConstants.OPTIONSKEY) ? jsonConnectionData.getString(ESConstants.OPTIONSKEY) : null;
+        String password = jsonConnectionData.has(ESConstants.CREDKEY) ? jsonConnectionData.getString(ESConstants.CREDKEY) : null;
+        String user = jsonConnectionData.has("user") ? jsonConnectionData.getString("user") : null;
+
+        ElasticSearchConnection connection = new ElasticSearchConnection(id);
+
+        connection.setHost(host);
+        connection.setPort(port);
+        connection.setUser(user);
+        connection.isConnected(isConnected);
+        if (password != null && password.contains("_ENC")) {
+            password = password.substring(0, 32);
+            password = EncryptionUtils.passwordBaseDecrypt(password);
+        }
+        connection.setPassword(password);
+        connection.setOptions(options);
+        result.put("connectionStatus", "success");
+        result.put("connection", connection);
     }
 
     @Override
@@ -252,16 +265,15 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("id", connection.getId());
         result.put("host", connection.getHost());
-        result.put("isConnected", connection.isConnected());
-        result.put("clusterName", ((ElasticSearchConnection) connection).getClusterName());
+        result.put(ESConstants.IS_CONNECTED, connection.isConnected());
         result.put("databaseType", connection.getDatabaseType());
-        result.put("options", connection.getOptions());
+        result.put(ESConstants.OPTIONSKEY, connection.getOptions());
         if (!StringUtils.isEmpty(connection.getPassword())) {
-            result.put("password", EncryptionUtils.passwordBaseEncrypt(connection.getPassword()) + "_ENC");
+            result.put(ESConstants.CREDKEY, EncryptionUtils.passwordBaseEncrypt(connection.getPassword()) + "_ENC");
 
         }
         result.put("user", connection.getUser());
-        return  result;
+        return result;
     }
 
     @Override
@@ -272,7 +284,6 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
         String connectionType = setStringConnectionProperty(connectionNode, ElasticSearchConnection.DATABASE_TYPE_PROPETRY, true);
         Integer port = setIntegerConnectionProperty(connectionNode, ElasticSearchConnection.PORT_PROPERTY, true);
         Boolean isConnected = setBooleanConnectionProperty(connectionNode, ElasticSearchConnection.IS_CONNECTED_PROPERTY);
-        String clusterName = setStringConnectionProperty(connectionNode, ElasticSearchConnection.CLUSTER_NAME_PROPERTY, false);
         String options = setStringConnectionProperty(connectionNode, ElasticSearchConnection.OPTIONS_PROPERTY, false);
         String password = decodePassword(connectionNode, ElasticSearchConnection.PASSWORD_PROPERTY);
         String user = setStringConnectionProperty(connectionNode, ElasticSearchConnection.USER_PROPERTY, false);
@@ -281,7 +292,6 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
         storedConnection.setHost(host);
         storedConnection.setPort(port);
         storedConnection.isConnected(isConnected);
-        storedConnection.setClusterName(clusterName);
         storedConnection.setOptions(options);
         storedConnection.setDatabaseType(connectionType);
         storedConnection.setUser(user);
