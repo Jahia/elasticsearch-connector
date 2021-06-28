@@ -113,7 +113,8 @@ public class ElasticSearchConnection extends AbstractConnection {
         try {
             ioReactor = new DefaultConnectingIOReactor();
             connectionManager = new PoolingNHttpClientConnectionManager(ioReactor);
-            connectionManager.setDefaultMaxPerRoute(20);
+            connectionManager.setDefaultMaxPerRoute(10);
+            connectionManager.setMaxTotal(30);
         } catch (IOReactorException ex) {
             logger.error("Failed to create connection Manager due to: {}", ex.getMessage(), ex);
         }
@@ -221,7 +222,7 @@ public class ElasticSearchConnection extends AbstractConnection {
 
     @Override
     public Object beforeRegisterAsService() {
-        esRestHighLevelClient = new ElasticRestHighLevelClientImpl(resolveClient(true));
+        esRestHighLevelClient = new ElasticRestHighLevelClientImpl(resolveClient(true, false));
         return esRestHighLevelClient;
     }
 
@@ -260,7 +261,7 @@ public class ElasticSearchConnection extends AbstractConnection {
     public boolean testConnectionCreation() {
         RestHighLevelClient transportClientService = null;
         try {
-            transportClientService = resolveClient(false);
+            transportClientService = resolveClient(false, true);
             return transportClientService.ping(RequestOptions.DEFAULT);
         } catch (ElasticsearchStatusException | ConnectException e) {
             logger.warn("Failed to create/ping connection due to: {}", e.getMessage());
@@ -371,7 +372,7 @@ public class ElasticSearchConnection extends AbstractConnection {
         return CONNECTION_BASE + "/" + JCRContentUtils.generateNodeName(getId());
     }
 
-    private RestHighLevelClient resolveClient(boolean snifferToBeAdded) {
+    private RestHighLevelClient resolveClient(boolean snifferToBeAdded, boolean testingOnly) {
         List<HttpHost> addresses = new ArrayList<>();
         int snifferInterval = DEFAULT_NODES_SNIFFER_INTERVAL;
         boolean useSSL = false;
@@ -393,9 +394,9 @@ public class ElasticSearchConnection extends AbstractConnection {
                         .setConnectTimeout(30000)
                         .setSocketTimeout(60000 * 5));
 
-        if (connectionManager != null) {
+        if (!testingOnly && connectionManager != null) {
             builder.setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setConnectionManager(connectionManager)
-                                                                              .setDefaultIOReactorConfig(IOReactorConfig.custom().build()));
+                                                                              .setDefaultIOReactorConfig(IOReactorConfig.custom().setTcpNoDelay(false).build()));
         }
         //If SSL or security is enabled handle the configuration
         if (useSSL || (StringUtils.isNotEmpty(user) && StringUtils.isNotEmpty(password))) {
