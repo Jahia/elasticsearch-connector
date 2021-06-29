@@ -45,6 +45,7 @@ import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.client.*;
+import org.elasticsearch.client.core.MainResponse;
 import org.elasticsearch.client.sniff.ElasticsearchNodesSniffer;
 import org.elasticsearch.client.sniff.SniffOnFailureListener;
 import org.elasticsearch.client.sniff.Sniffer;
@@ -289,6 +290,7 @@ public class ElasticSearchConnection extends AbstractConnection {
     public Object getServerStatus() {
         JSONObject connectionData = new JSONObject();
         JSONObject status = new JSONObject();
+        JSONObject aboutConnection = new JSONObject();
         try {
             connectionData.put("host", this.host);
             connectionData.put("port", this.port);
@@ -297,6 +299,7 @@ public class ElasticSearchConnection extends AbstractConnection {
             connectionData.put("id", this.id);
             connectionData.put("uri", this.uri);
             connectionData.put("status", status);
+            connectionData.put("aboutConnection", aboutConnection);
 
             ClusterHealthRequest request = new ClusterHealthRequest();
             ClusterHealthResponse healthResponse = esRestHighLevelClient.getClient().cluster().health(request, RequestOptions.DEFAULT);
@@ -307,6 +310,8 @@ public class ElasticSearchConnection extends AbstractConnection {
             status.put("numberOfPendingTasks", healthResponse.getNumberOfPendingTasks());
             status.put("status", healthResponse.getStatus());
 
+            MainResponse mainResponse = esRestHighLevelClient.getClient().info(RequestOptions.DEFAULT);
+            aboutConnection.put("dbVersion", mainResponse.getVersion().getNumber());
             Response get = esRestHighLevelClient.getClient().getLowLevelClient().performRequest(new Request("GET", "/_cluster/stats"));
             String responseBody = EntityUtils.toString(get.getEntity());
             JSONObject jsonObject = new JSONObject(responseBody);
