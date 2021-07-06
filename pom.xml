@@ -311,6 +311,7 @@
                         </Import-Package>
                         <Export-Package>
                             !org.elasticsearch.xpack.*,
+                            !org.elasticsearch.core.internal.*,
                             org.elasticsearch.*,
                             org.elasticsearch,
                             com.carrotsearch.hppc.*,
