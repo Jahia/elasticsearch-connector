@@ -1,3 +1,21 @@
+# v0.0.1 (Mon Dec 20 2021)
+
+#### 🐛 Bug Fix
+
+- QA-14048: Backport of fixes for log4j2 issue [#7](https://github.com/Jahia/elasticsearch-connector/pull/7) ([@cedmail](https://github.com/cedmail) [@jahia-ci](https://github.com/jahia-ci))
+
+#### ⚠️ Pushed to `master`
+
+- QA-14048: do not use provided log4j2 as there is none. Ember 2.16.0 as in 1.1.1 ([@cedmail](https://github.com/cedmail))
+- QA-14048: Update PRIMARY_RELEASE_BRANCH ([@cedmail](https://github.com/cedmail))
+
+#### Authors: 2
+
+- Cedric Mailleux ([@cedmail](https://github.com/cedmail))
+- Jahia Continuous Integration account ([@jahia-ci](https://github.com/jahia-ci))
+
+---
+
 # v0.0.1 (Fri Dec 17 2021)
 
 #### 🐛 Bug Fix
