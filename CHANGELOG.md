@@ -1,3 +1,15 @@
+# v0.0.1 (Thu Dec 23 2021)
+
+#### ⚠️ Pushed to `master`
+
+- QA-14048: Downgrade elasticsearch client back to 7.13.2 ([@cedmail](https://github.com/cedmail))
+
+#### Authors: 1
+
+- Cedric Mailleux ([@cedmail](https://github.com/cedmail))
+
+---
+
 # v0.0.1 (Mon Dec 20 2021)
 
 #### 🐛 Bug Fix
