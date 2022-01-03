@@ -33,7 +33,7 @@
     </parent>
     <artifactId>elasticsearch-connector</artifactId>
     <name>Elastic Search Connector</name>
-    <version>3.1.2</version>
+    <version>3.1.2-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <description>This is the custom module (ElasticSearch Connector) for running on a Digital Experience Manager server.</description>
 
@@ -41,7 +41,7 @@
         <connection>scm:git:git@github.com:Jahia/elasticsearch-connector.git</connection>
         <developerConnection>scm:git:git@github.com:Jahia/elasticsearch-connector.git</developerConnection>
         <url>https://github.com/Jahia/elasticsearch-connector</url>
-        <tag>3_1_2</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
