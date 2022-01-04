@@ -33,7 +33,7 @@
     </parent>
     <artifactId>elasticsearch-connector</artifactId>
     <name>Elastic Search Connector</name>
-    <version>3.2.0-SNAPSHOT</version>
+    <version>3.1.2-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <description>This is the custom module (ElasticSearch Connector) for running on a Digital Experience Manager server.</description>
 
@@ -47,7 +47,7 @@
     <properties>
         <jahia-module-type>system</jahia-module-type>
         <jahia-depends>default,siteSettings,serverSettings</jahia-depends>
-        <jahia-module-signature>MCwCFD2T7GCowfZjYU+lHNAJAzfVrE/lAhQo08z65C9/zWQ4Avi6g5PXbeol0w==</jahia-module-signature>
+        <jahia-module-signature>MC0CFQCAH1FYSqTmvUlnRfaHpTar0Nv+QQIUZm2qfObnr1fE6OHkDCZxwRYGnfw=</jahia-module-signature>
         <javaxws-annotations.version>1.1.1</javaxws-annotations.version>
         <jackson.version>2.9.0</jackson.version>
         <jersey.version>2.18</jersey.version>
