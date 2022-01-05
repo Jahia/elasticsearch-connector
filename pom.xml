@@ -47,7 +47,7 @@
     <properties>
         <jahia-module-type>system</jahia-module-type>
         <jahia-depends>default,siteSettings,serverSettings</jahia-depends>
-        <jahia-module-signature>MC0CFQCAH1FYSqTmvUlnRfaHpTar0Nv+QQIUZm2qfObnr1fE6OHkDCZxwRYGnfw=</jahia-module-signature>
+        <jahia-module-signature>MCwCFA0Uvhg6Z89fUt51AZkGPJcGhX2gAhQCmNDksQYSSFtZttRTghxAvlVEfQ==</jahia-module-signature>
         <javaxws-annotations.version>1.1.1</javaxws-annotations.version>
         <jackson.version>2.9.0</jackson.version>
         <jersey.version>2.18</jersey.version>
