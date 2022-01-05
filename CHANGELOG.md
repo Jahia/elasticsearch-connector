@@ -1,3 +1,23 @@
+# v0.0.1 (Wed Jan 05 2022)
+
+#### 🐛 Bug Fix
+
+- QA-14068 - Fix and prepare release [#10](https://github.com/Jahia/elasticsearch-connector/pull/10) ([@rknj](https://github.com/rknj))
+- QA-14068 - Fix config and signature [#8](https://github.com/Jahia/elasticsearch-connector/pull/8) ([@rknj](https://github.com/rknj) [@jahia-ci](https://github.com/jahia-ci))
+
+#### ⚠️ Pushed to `master`
+
+- Update readme [ci sign] ([@rknj](https://github.com/rknj))
+- QA-14048: Downgrade elasticsearch client back to 7.13.2 ([@cedmail](https://github.com/cedmail))
+
+#### Authors: 3
+
+- Cedric Mailleux ([@cedmail](https://github.com/cedmail))
+- Jahia Continuous Integration account ([@jahia-ci](https://github.com/jahia-ci))
+- Michael De Checchi ([@rknj](https://github.com/rknj))
+
+---
+
 # v0.0.1 (Fri Dec 17 2021)
 
 #### 🐛 Bug Fix
