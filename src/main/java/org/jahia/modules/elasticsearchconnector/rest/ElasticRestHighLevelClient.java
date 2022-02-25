@@ -12,4 +12,10 @@ import java.io.IOException;
 public interface ElasticRestHighLevelClient extends ConnectionService {
     RestHighLevelClient getClient();
     String performRequest(Request request) throws IOException;
+
+    /**
+     *
+     * @return the content of the property elasticsearch.prefix, null if not available/defined
+     */
+    String getEnvironmentPrefix();
 }
