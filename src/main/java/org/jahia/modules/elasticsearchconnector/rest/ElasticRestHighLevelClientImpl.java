@@ -4,6 +4,7 @@ import org.apache.http.util.EntityUtils;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.jahia.settings.SettingsBean;
 
 import java.io.IOException;
 
@@ -34,5 +35,10 @@ public class ElasticRestHighLevelClientImpl implements ElasticRestHighLevelClien
         } else {
             throw new IOException("Only GET methods are supported");
         }
+    }
+
+    @Override
+    public String getEnvironmentPrefix() {
+        return SettingsBean.getInstance().getPropertyValue("elasticsearch.prefix");
     }
 }
