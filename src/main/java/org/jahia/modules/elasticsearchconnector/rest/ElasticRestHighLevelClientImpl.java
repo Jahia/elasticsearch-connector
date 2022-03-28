@@ -39,6 +39,6 @@ public class ElasticRestHighLevelClientImpl implements ElasticRestHighLevelClien
 
     @Override
     public String getEnvironmentPrefix() {
-        return SettingsBean.getInstance().getPropertyValue("elasticsearch.prefix");
+        return SettingsBean.getInstance().getPropertiesFile().getProperty("elasticsearch.prefix");
     }
 }
