@@ -9,6 +9,10 @@
 
 This connector is intended for use with database connector.
 
+## Jahia Cloud
+
+IMPORTANT: The REST API exposed by this module is used by the cloud team, its methods MUST NOT be modified without prior consultation with the Jahia Cloud team as it might have impacts on their implementation
+
 ## Usage 
 
 To use you need to have elasticsearch running with transport tcp enabled at port 9300. To enable it you need to add 
