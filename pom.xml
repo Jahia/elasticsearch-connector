@@ -52,6 +52,7 @@
         <elasticsearch.version>7.13.2</elasticsearch.version>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
+        <jahia.nexus.staging.repository.id>40c27f27a86d2d</jahia.nexus.staging.repository.id>
     </properties>
     <repositories>
         <repository>
@@ -92,11 +93,11 @@
     <distributionManagement>
         <repository>
             <id>jahia-enterprise-releases</id>
-            <url>https://devtools.jahia.com/nexus/content/repositories/jahia-enterprise-releases</url>
+            <url>https://devtools.jahia.com/nexus/content/repositories/jahia-connector-enterprise-releases</url>
         </repository>
         <snapshotRepository>
             <id>jahia-enterprise-snapshots</id>
-            <url>https://devtools.jahia.com/nexus/content/repositories/jahia-enterprise-snapshots</url>
+            <url>https://devtools.jahia.com/nexus/content/repositories/jahia-connector-enterprise-snapshots</url>
         </snapshotRepository>
     </distributionManagement>
     <dependencies>
