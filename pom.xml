@@ -46,7 +46,7 @@
 
     <properties>
         <jahia-module-type>system</jahia-module-type>
-        <jahia-depends>default,siteSettings,serverSettings</jahia-depends>
+        <jahia-depends>database-connector</jahia-depends>
         <jahia-module-signature>MCwCFATLASQzw9Yy+KmBP8TYG2h/OZLlAhRpJoWhiPYKNZ0AC8hdX/5h9utP7Q==</jahia-module-signature>
         <javaxws-annotations.version>1.1.1</javaxws-annotations.version>
         <jersey.version>2.18</jersey.version>
@@ -143,6 +143,7 @@
             <version>${jackson.osgi.version}</version>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
@@ -196,12 +197,6 @@
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.http.base</artifactId>
             <version>${felix.http.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jahia.modules</groupId>
-            <artifactId>jcrestapi</artifactId>
-            <version>2.3.1</version>
             <scope>provided</scope>
         </dependency>
         <!-- **START** ELASTIC SEARCH DEPENDENCIES -->
@@ -293,7 +288,6 @@
                     <instructions>
                         <_invalidfilenames>CON(\..+)?|PRN(\..+)?|AUX(\..+)?|NUL(\..+)?|COM[1-9](\..+)?|LPT[1-9](\..+)?|\$Mft|\$MftMirr|\$LogFile|\$Volume|\$AttrDef|\$Bitmap|\$Boot|\$BadClus|\$Secure|\$Upcase|\$Extend|\$Quota|\$ObjId|\$Reparse</_invalidfilenames>
                         <_dsannotations>*</_dsannotations>
-                        <Jahia-Depends>default,serverSettings,database-connector</Jahia-Depends>
                         <Jahia-Module-Priority>3</Jahia-Module-Priority>
                         <JAX-RS-Alias>/dbconn/elasticsearch</JAX-RS-Alias>
                         <JAX-RS-Application>org.jahia.modules.elasticsearchconnector.api.ECApiApplication</JAX-RS-Application>
