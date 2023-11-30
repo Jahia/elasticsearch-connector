@@ -54,7 +54,7 @@ public class ECApi extends DatabaseConnectionAPI {
     private static final String ERROR_CANNOT_ACCESS_CONNECTION = "{\"error\":\"Cannot access connection\"}";
     private static final MessageFormat missingParametersMessage = new MessageFormat("'{'\"missingParameters\":\"{0}\"'}'");
     private static final String CONNECTION_VERIFIED = "connectionVerified";
-    private static final String CANNOT_PARSE_JSON_DATA = "Cannot parse json data : {}";
+    private static final String CANNOT_PARSE_JSON_DATA = "Cannot parse json data";
     private static final String ERROR_CANNOT_PARSE_JSON_DATA = "{\"error\":\"Cannot parse json data\"}";
     private final DatabaseConnectorService databaseConnectorService;
 
@@ -109,14 +109,14 @@ public class ECApi extends DatabaseConnectionAPI {
             if (!connectionParameters.has("host") || StringUtils.isEmpty(connectionParameters.getString("host"))) {
                 missingParameters.put("host");
             }
-            if (missingParameters.length() > 0) {
+            if (!missingParameters.isEmpty()) {
                 return Response.status(Response.Status.BAD_REQUEST).entity(missingParametersMessage.format(missingParameters.toString())).build();
             } else {
                 JSONObject jsonAnswer = processConnection(connectionParameters);
                 return Response.status(Response.Status.OK).entity(jsonAnswer.toString()).build();
             }
         } catch (JSONException e) {
-            logger.error(CANNOT_PARSE_JSON_DATA, data, e);
+            logger.error(CANNOT_PARSE_JSON_DATA, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ERROR_CANNOT_PARSE_JSON_DATA).build();
         }
     }
@@ -124,11 +124,11 @@ public class ECApi extends DatabaseConnectionAPI {
     private JSONObject processConnection(JSONObject connectionParameters) throws JSONException {
         String id = connectionParameters.has("id") ? connectionParameters.getString("id") : null;
         String host = connectionParameters.has("host") ? connectionParameters.getString("host") : null;
-        Integer port = !StringUtils.isEmpty(connectionParameters.getString("port")) ? connectionParameters.getInt("port") : null;
+        Integer port = connectionParameters.optIntegerObject("port", null);
         Boolean isConnected = connectionParameters.has(ESConstants.IS_CONNECTED) && connectionParameters.getBoolean(ESConstants.IS_CONNECTED);
         String password = connectionParameters.has(ESConstants.CREDKEY) ? StringUtils.defaultIfEmpty(connectionParameters.getString(ESConstants.CREDKEY), null) : null;
         String user = connectionParameters.has("user") ? StringUtils.defaultIfEmpty(connectionParameters.getString("user"), null) : null;
-        String options = connectionParameters.has(ESConstants.OPTIONSKEY) ? connectionParameters.getString(ESConstants.OPTIONSKEY) : null;
+        String options = connectionParameters.has(ESConstants.OPTIONSKEY) ? connectionParameters.getJSONObject(ESConstants.OPTIONSKEY).toString() : null;
         ElasticSearchConnection connection = new ElasticSearchConnection(id);
         connection.setHost(host);
         connection.setPort(port);
@@ -188,14 +188,14 @@ public class ECApi extends DatabaseConnectionAPI {
             if (!connectionParameters.has("host") || StringUtils.isEmpty(connectionParameters.getString("host"))) {
                 missingParameters.put("host");
             }
-            if (missingParameters.length() > 0) {
+            if (!missingParameters.isEmpty()) {
                 return Response.status(Response.Status.BAD_REQUEST).entity(missingParametersMessage.format(missingParameters.toString())).build();
             } else {
                 JSONObject jsonAnswer = updateConnection(connectionParameters);
                 return Response.status(Response.Status.OK).entity(jsonAnswer.toString()).build();
             }
         } catch (JSONException e) {
-            logger.error(CANNOT_PARSE_JSON_DATA, data, e);
+            logger.error(CANNOT_PARSE_JSON_DATA, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ERROR_CANNOT_PARSE_JSON_DATA).build();
         }
     }
@@ -204,11 +204,11 @@ public class ECApi extends DatabaseConnectionAPI {
         String id = connectionParameters.has("id") ? connectionParameters.getString("id") : null;
         String oldId = connectionParameters.has(ESConstants.OLD_ID) ? connectionParameters.getString(ESConstants.OLD_ID) : null;
         String host = connectionParameters.has("host") ? connectionParameters.getString("host") : null;
-        Integer port = !StringUtils.isEmpty(connectionParameters.getString("port")) ? connectionParameters.getInt("port") : null;
+        Integer port = connectionParameters.optIntegerObject("port", null);
         Boolean isConnected = connectionParameters.has(ESConstants.IS_CONNECTED) && connectionParameters.getBoolean(ESConstants.IS_CONNECTED);
         String password = connectionParameters.has(ESConstants.CREDKEY) ? connectionParameters.getString(ESConstants.CREDKEY) : null;
         String user = connectionParameters.has("user") ? connectionParameters.getString("user") : null;
-        String options = connectionParameters.has(ESConstants.OPTIONSKEY) ? connectionParameters.getString(ESConstants.OPTIONSKEY) : null;
+        String options = connectionParameters.has(ESConstants.OPTIONSKEY) ? connectionParameters.getJSONObject(ESConstants.OPTIONSKEY).toString() : null;
 
         ElasticSearchConnection connection = new ElasticSearchConnection(id);
 
@@ -319,14 +319,14 @@ public class ECApi extends DatabaseConnectionAPI {
             if (!connectionParameters.has("host") || StringUtils.isEmpty(connectionParameters.getString("host"))) {
                 missingParameters.put("host");
             }
-            if (missingParameters.length() > 0) {
-                return Response.status(Response.Status.BAD_REQUEST).entity("{\"missingParameters\":" + missingParameters.toString() + "}").build();
+            if (!missingParameters.isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST).entity(missingParametersMessage.format(missingParameters.toString())).build();
             } else {
                 boolean connectionTestPassed = isConnectionTestPassed(connectionParameters);
                 return Response.status(Response.Status.OK).entity("{\"result\": " + connectionTestPassed + "}").build();
             }
         } catch (JSONException e) {
-            logger.error(CANNOT_PARSE_JSON_DATA, data, e);
+            logger.error(CANNOT_PARSE_JSON_DATA, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(ERROR_CANNOT_PARSE_JSON_DATA).build();
         }
     }
@@ -334,9 +334,9 @@ public class ECApi extends DatabaseConnectionAPI {
     private boolean isConnectionTestPassed(JSONObject connectionParameters) throws JSONException {
         String id = connectionParameters.has("id") ? connectionParameters.getString("id") : null;
         String host = connectionParameters.has("host") ? connectionParameters.getString("host") : null;
-        Integer port = !StringUtils.isEmpty(connectionParameters.getString("port")) ? connectionParameters.getInt("port") : null;
+        Integer port = connectionParameters.optIntegerObject("port", null);
         Boolean isConnected = connectionParameters.has(ESConstants.IS_CONNECTED) && connectionParameters.getBoolean(ESConstants.IS_CONNECTED);
-        String options = connectionParameters.has(ESConstants.OPTIONSKEY) ? connectionParameters.getString(ESConstants.OPTIONSKEY) : null;
+        String options = connectionParameters.has(ESConstants.OPTIONSKEY) ? connectionParameters.getJSONObject(ESConstants.OPTIONSKEY).toString() : null;
         String password = connectionParameters.has(ESConstants.CREDKEY) ? connectionParameters.getString(ESConstants.CREDKEY) : null;
         String user = connectionParameters.has("user") ? connectionParameters.getString("user") : null;
 
