@@ -29,7 +29,7 @@
     <parent>
         <artifactId>jahia-modules</artifactId>
         <groupId>org.jahia.modules</groupId>
-        <version>8.1.0.0</version>
+        <version>8.1.6.2-SNAPSHOT</version>
     </parent>
     <artifactId>elasticsearch-connector</artifactId>
     <name>Elastic Search Connector</name>
@@ -54,6 +54,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
         <jahia.nexus.staging.repository.id>40c27f27a86d2d</jahia.nexus.staging.repository.id>
+        <jahia.plugin.version>6.9</jahia.plugin.version>
     </properties>
     <repositories>
         <repository>
@@ -204,13 +205,11 @@
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
             <version>${log4j.version}</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
             <version>${log4j.version}</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
@@ -276,12 +275,12 @@
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <extensions>true</extensions>
-                <version>4.2.0</version>
+                <version>5.1.9</version>
                 <dependencies>
                     <dependency>
                         <groupId>biz.aQute.bnd</groupId>
                         <artifactId>biz.aQute.bndlib</artifactId>
-                        <version>4.2.0</version>
+                        <version>6.4.0</version>
                     </dependency>
                 </dependencies>
                 <configuration>

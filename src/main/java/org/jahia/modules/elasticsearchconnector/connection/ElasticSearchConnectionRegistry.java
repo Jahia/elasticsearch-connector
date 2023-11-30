@@ -227,7 +227,7 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
         if (!jsonConnectionData.has("host") || StringUtils.isEmpty(jsonConnectionData.getString("host"))) {
             missingParameters.put("host");
         }
-        if (missingParameters.length() > 0) {
+        if (!missingParameters.isEmpty()) {
             result.put("connectionStatus", ESConstants.FAILED);
         } else {
             createConnectionFromJSON(result, jsonConnectionData);
@@ -238,9 +238,9 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
     private void createConnectionFromJSON(Map<String, Object> result, JSONObject jsonConnectionData) throws JSONException {
         String id = jsonConnectionData.getString("id");
         String host = jsonConnectionData.getString("host");
-        Integer port = !StringUtils.isEmpty(jsonConnectionData.getString("port")) ? jsonConnectionData.getInt("port") : null;
+        Integer port = jsonConnectionData.optIntegerObject("port", null);
         Boolean isConnected = jsonConnectionData.has(ESConstants.IS_CONNECTED) && jsonConnectionData.getBoolean(ESConstants.IS_CONNECTED);
-        String options = jsonConnectionData.has(ESConstants.OPTIONSKEY) ? jsonConnectionData.getString(ESConstants.OPTIONSKEY) : null;
+        String options = jsonConnectionData.has(ESConstants.OPTIONSKEY) ? jsonConnectionData.getJSONObject(ESConstants.OPTIONSKEY).toString() : null;
         String password = jsonConnectionData.has(ESConstants.CREDKEY) ? jsonConnectionData.getString(ESConstants.CREDKEY) : null;
         String user = jsonConnectionData.has("user") ? jsonConnectionData.getString("user") : null;
 
