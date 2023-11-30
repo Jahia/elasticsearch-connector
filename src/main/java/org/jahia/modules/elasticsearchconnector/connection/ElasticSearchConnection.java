@@ -524,7 +524,7 @@ public class ElasticSearchConnection extends AbstractConnection {
                 //Build HttpHost for each additional address provided in settings
                 for (int i = 0; i < hostAddresses.length(); i++) {
                     JSONObject hostAddress = hostAddresses.getJSONObject(i);
-                    int port = hostAddress.has("port") && hostAddress.getString("port") != null ? hostAddress.getInt("port") : DEFAULT_PORT;
+                    int port = hostAddress.optInt("port", DEFAULT_PORT);
                     addresses.add(new HttpHost(hostAddress.getString("host"), port, protocolScheme));
                 }
             }
