@@ -348,7 +348,8 @@
                             org.apache.lucene.search.*,
                             org.apache.lucene.util.*,
                             org.jahia.modules.elasticsearchconnector.rest,
-                            org.jahia.modules.elasticsearchconnector.connection
+                            org.jahia.modules.elasticsearchconnector.connection,
+                            *
                         </Import-Package>
                         <Export-Package>
                             !org.elasticsearch.xpack.*,
