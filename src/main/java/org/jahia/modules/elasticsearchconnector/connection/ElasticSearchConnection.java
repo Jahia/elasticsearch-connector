@@ -397,7 +397,10 @@ public class ElasticSearchConnection extends AbstractConnection {
         PoolingNHttpClientConnectionManager manager = getConnectionManager();
         if (!testingOnly && manager != null) {
             builder.setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setConnectionManager(manager)
-                                                                                      .setDefaultIOReactorConfig(IOReactorConfig.custom().setTcpNoDelay(false).build()));
+                    .setDefaultIOReactorConfig(IOReactorConfig.custom()
+                            .setTcpNoDelay(false)
+                            .setSoKeepAlive(true)
+                            .build()));
         }
         //If SSL or security is enabled handle the configuration
         if (useSSL || (StringUtils.isNotEmpty(user) && StringUtils.isNotEmpty(password))) {
