@@ -324,7 +324,7 @@
                             org.osgi.service.log,
                             org.osgi.service.repository,
                             org.osgi.util.tracker,
-                            org.json,
+                            org.json;version="[20070829, 20231014)"
                             com.fasterxml.jackson.databind,
                             com.fasterxml.jackson.databind.*,
                             org.slf4j,

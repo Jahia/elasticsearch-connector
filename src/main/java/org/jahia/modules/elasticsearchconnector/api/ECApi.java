@@ -109,7 +109,7 @@ public class ECApi extends DatabaseConnectionAPI {
             if (!connectionParameters.has("host") || StringUtils.isEmpty(connectionParameters.getString("host"))) {
                 missingParameters.put("host");
             }
-            if (!missingParameters.isEmpty()) {
+            if (missingParameters.length() > 0) {
                 return Response.status(Response.Status.BAD_REQUEST).entity(missingParametersMessage.format(missingParameters.toString())).build();
             } else {
                 JSONObject jsonAnswer = processConnection(connectionParameters);
@@ -122,21 +122,9 @@ public class ECApi extends DatabaseConnectionAPI {
     }
 
     private JSONObject processConnection(JSONObject connectionParameters) throws JSONException {
-        String id = connectionParameters.has("id") ? connectionParameters.getString("id") : null;
-        String host = connectionParameters.has("host") ? connectionParameters.getString("host") : null;
-        Integer port = connectionParameters.optIntegerObject("port", null);
-        Boolean isConnected = connectionParameters.has(ESConstants.IS_CONNECTED) && connectionParameters.getBoolean(ESConstants.IS_CONNECTED);
-        String password = connectionParameters.has(ESConstants.CREDKEY) ? StringUtils.defaultIfEmpty(connectionParameters.getString(ESConstants.CREDKEY), null) : null;
-        String user = connectionParameters.has("user") ? StringUtils.defaultIfEmpty(connectionParameters.getString("user"), null) : null;
-        String options = connectionParameters.has(ESConstants.OPTIONSKEY) ? connectionParameters.getJSONObject(ESConstants.OPTIONSKEY).toString() : null;
-        ElasticSearchConnection connection = new ElasticSearchConnection(id);
-        connection.setHost(host);
-        connection.setPort(port);
-        connection.setPassword(password);
-        connection.setUser(user);
-        connection.isConnected(isConnected);
-        connection.setOptions(options);
+        ElasticSearchConnection connection = createEsConnection(connectionParameters);
         connection.setDatabaseType(ElasticSearchConnection.DATABASE_TYPE);
+
         JSONObject jsonAnswer = new JSONObject();
         if (!databaseConnectorService.testConnection(connection)) {
             connection.isConnected(false);
@@ -146,7 +134,7 @@ public class ECApi extends DatabaseConnectionAPI {
         }
         databaseConnectorService.addEditConnection(connection, false);
         jsonAnswer.put(ESConstants.SUCCESSKEY, "Connection successfully added");
-        logger.info("Successfully created ElasticSearchDB connection: {}", id);
+        logger.info("Successfully created ElasticSearchDB connection: {}", connection.getId());
         return jsonAnswer;
     }
 
@@ -188,7 +176,7 @@ public class ECApi extends DatabaseConnectionAPI {
             if (!connectionParameters.has("host") || StringUtils.isEmpty(connectionParameters.getString("host"))) {
                 missingParameters.put("host");
             }
-            if (!missingParameters.isEmpty()) {
+            if (missingParameters.length() > 0) {
                 return Response.status(Response.Status.BAD_REQUEST).entity(missingParametersMessage.format(missingParameters.toString())).build();
             } else {
                 JSONObject jsonAnswer = updateConnection(connectionParameters);
@@ -201,24 +189,9 @@ public class ECApi extends DatabaseConnectionAPI {
     }
 
     private JSONObject updateConnection(JSONObject connectionParameters) throws JSONException {
-        String id = connectionParameters.has("id") ? connectionParameters.getString("id") : null;
+        ElasticSearchConnection connection = createEsConnection(connectionParameters);
         String oldId = connectionParameters.has(ESConstants.OLD_ID) ? connectionParameters.getString(ESConstants.OLD_ID) : null;
-        String host = connectionParameters.has("host") ? connectionParameters.getString("host") : null;
-        Integer port = connectionParameters.optIntegerObject("port", null);
-        Boolean isConnected = connectionParameters.has(ESConstants.IS_CONNECTED) && connectionParameters.getBoolean(ESConstants.IS_CONNECTED);
-        String password = connectionParameters.has(ESConstants.CREDKEY) ? connectionParameters.getString(ESConstants.CREDKEY) : null;
-        String user = connectionParameters.has("user") ? connectionParameters.getString("user") : null;
-        String options = connectionParameters.has(ESConstants.OPTIONSKEY) ? connectionParameters.getJSONObject(ESConstants.OPTIONSKEY).toString() : null;
-
-        ElasticSearchConnection connection = new ElasticSearchConnection(id);
-
         connection.setOldId(oldId);
-        connection.setHost(host);
-        connection.setPort(port);
-        connection.setPassword(password);
-        connection.setUser(user);
-        connection.isConnected(isConnected);
-        connection.setOptions(options);
         connection.setDatabaseType(ElasticSearchConnection.DATABASE_TYPE);
 
         JSONObject jsonAnswer = new JSONObject();
@@ -230,7 +203,7 @@ public class ECApi extends DatabaseConnectionAPI {
         }
         databaseConnectorService.addEditConnection(connection, true);
         jsonAnswer.put(ESConstants.SUCCESSKEY, "ElasticSearch Connection successfully edited");
-        logger.info("Successfully edited ElasticSearch connection: {}", id);
+        logger.info("Successfully edited ElasticSearch connection: {}", connection.getId());
         return jsonAnswer;
     }
 
@@ -319,7 +292,7 @@ public class ECApi extends DatabaseConnectionAPI {
             if (!connectionParameters.has("host") || StringUtils.isEmpty(connectionParameters.getString("host"))) {
                 missingParameters.put("host");
             }
-            if (!missingParameters.isEmpty()) {
+            if (missingParameters.length() > 0) {
                 return Response.status(Response.Status.BAD_REQUEST).entity(missingParametersMessage.format(missingParameters.toString())).build();
             } else {
                 boolean connectionTestPassed = isConnectionTestPassed(connectionParameters);
@@ -332,23 +305,7 @@ public class ECApi extends DatabaseConnectionAPI {
     }
 
     private boolean isConnectionTestPassed(JSONObject connectionParameters) throws JSONException {
-        String id = connectionParameters.has("id") ? connectionParameters.getString("id") : null;
-        String host = connectionParameters.has("host") ? connectionParameters.getString("host") : null;
-        Integer port = connectionParameters.optIntegerObject("port", null);
-        Boolean isConnected = connectionParameters.has(ESConstants.IS_CONNECTED) && connectionParameters.getBoolean(ESConstants.IS_CONNECTED);
-        String options = connectionParameters.has(ESConstants.OPTIONSKEY) ? connectionParameters.getJSONObject(ESConstants.OPTIONSKEY).toString() : null;
-        String password = connectionParameters.has(ESConstants.CREDKEY) ? connectionParameters.getString(ESConstants.CREDKEY) : null;
-        String user = connectionParameters.has("user") ? connectionParameters.getString("user") : null;
-
-        ElasticSearchConnection connection = new ElasticSearchConnection(id);
-
-        connection.setHost(host);
-        connection.setPort(port);
-        connection.isConnected(isConnected);
-        connection.setOptions(options);
-        connection.setPassword(password);
-        connection.setUser(user);
-
+        ElasticSearchConnection connection = createEsConnection(connectionParameters);
         return databaseConnectorService.testConnection(connection);
     }
 
@@ -374,5 +331,28 @@ public class ECApi extends DatabaseConnectionAPI {
             logger.error("Failed retrieve Status for ElasticSearch connection with id: {}", connectionId, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{\"failed\":\"Cannot get database status\"}").build();
         }
+    }
+
+    private ElasticSearchConnection createEsConnection(JSONObject connectionParameters) {
+        String id = connectionParameters.has("id") ? connectionParameters.getString("id") : null;
+        String host = connectionParameters.has("host") ? connectionParameters.getString("host") : null;
+        Integer port = null;
+        try {
+            port = connectionParameters.getInt("port");
+        } catch (JSONException e) { /* Do nothing; default to null */ }
+        Boolean isConnected = connectionParameters.has(ESConstants.IS_CONNECTED) && connectionParameters.getBoolean(ESConstants.IS_CONNECTED);
+        String user = connectionParameters.has("user") ? connectionParameters.getString("user") : null;
+        String password = connectionParameters.has(ESConstants.CREDKEY) ? connectionParameters.getString(ESConstants.CREDKEY) : null;
+        String options = connectionParameters.has(ESConstants.OPTIONSKEY) ? connectionParameters.get(ESConstants.OPTIONSKEY).toString() : null;
+
+        ElasticSearchConnection connection = new ElasticSearchConnection(id);
+        connection.setHost(host);
+        connection.setPort(port);
+        connection.isConnected(isConnected);
+        connection.setUser(user);
+        connection.setPassword(password);
+        connection.setOptions(options);
+
+        return connection;
     }
 }
