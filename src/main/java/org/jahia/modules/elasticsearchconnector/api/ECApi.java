@@ -333,7 +333,7 @@ public class ECApi extends DatabaseConnectionAPI {
         }
     }
 
-    private ElasticSearchConnection createEsConnection(JSONObject connectionParameters) {
+    private ElasticSearchConnection createEsConnection(JSONObject connectionParameters) throws JSONException {
         String id = connectionParameters.has("id") ? connectionParameters.getString("id") : null;
         String host = connectionParameters.has("host") ? connectionParameters.getString("host") : null;
         Integer port = null;

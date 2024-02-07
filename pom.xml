@@ -29,7 +29,7 @@
     <parent>
         <artifactId>jahia-modules</artifactId>
         <groupId>org.jahia.modules</groupId>
-        <version>8.1.6.2-SNAPSHOT</version>
+        <version>8.1.6.1</version>
     </parent>
     <artifactId>elasticsearch-connector</artifactId>
     <name>Elastic Search Connector</name>
@@ -324,7 +324,7 @@
                             org.osgi.service.log,
                             org.osgi.service.repository,
                             org.osgi.util.tracker,
-                            org.json;version="[20070829, 20231014)"
+                            org.json;version="[20070829, 20231014)",
                             com.fasterxml.jackson.databind,
                             com.fasterxml.jackson.databind.*,
                             org.slf4j,
