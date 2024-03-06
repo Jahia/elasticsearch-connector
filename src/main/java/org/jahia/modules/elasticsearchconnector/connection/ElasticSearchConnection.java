@@ -23,7 +23,6 @@
  */
 package org.jahia.modules.elasticsearchconnector.connection;
 
-import com.google.common.collect.Iterables;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -388,7 +387,7 @@ public class ElasticSearchConnection extends AbstractConnection {
         }
         addresses.add(0, new HttpHost(host, port, protocolScheme));
 
-        RestClientBuilder builder = RestClient.builder(Iterables.toArray(addresses, HttpHost.class));
+        RestClientBuilder builder = RestClient.builder(addresses.toArray(new HttpHost[0]));
         builder.setRequestConfigCallback(
                 requestConfigBuilder -> requestConfigBuilder
                         .setConnectTimeout(30000)
