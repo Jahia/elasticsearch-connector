@@ -47,7 +47,7 @@
     <properties>
         <jahia-module-type>system</jahia-module-type>
         <jahia-depends>database-connector</jahia-depends>
-        <jahia-module-signature>MCwCFHy9pn1SQZ+k1QwWlavCroNAqmORAhRao2yfvKldWFF2Gr23Prv9YGN63A==</jahia-module-signature>
+        <jahia-module-signature>MC0CFQCCAFTEHVz4NI0bgxs2ZDlM/uuDFwIUFCuWW+5LF7A8KdbQclJcgw6LpbE=</jahia-module-signature>
         <javaxws-annotations.version>1.1.1</javaxws-annotations.version>
         <jersey.version>2.18</jersey.version>
         <elasticsearch.version>7.13.2</elasticsearch.version>
