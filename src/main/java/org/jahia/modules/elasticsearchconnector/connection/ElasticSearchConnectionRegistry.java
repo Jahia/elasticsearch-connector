@@ -34,6 +34,7 @@ import org.jahia.modules.elasticsearchconnector.api.ECApi;
 import org.jahia.services.content.JCRCallback;
 import org.jahia.services.content.JCRNodeWrapper;
 import org.jahia.services.content.JCRSessionWrapper;
+import org.jahia.settings.SettingsBean;
 import org.jahia.utils.EncryptionUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -45,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
+import javax.jcr.nodetype.NoSuchNodeTypeException;
 import javax.jcr.query.QueryResult;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -63,6 +65,8 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
     private static Logger logger = LoggerFactory.getLogger(ElasticSearchConnectionRegistry.class);
 
     static final Pattern IDENTIFIER_PATTERN = Pattern.compile("^[\\w]+[\\w\\-]+[\\w]+$");
+    private static final long RETRY_INTERVAL_MS = 1000; // 1 second
+    private static final long MAX_RETRIES_COUNT = 60; // wait for about one minute at most
 
     private DatabaseConnectorService databaseConnectorService = null;
 
@@ -108,25 +112,58 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
 
     @Override
     public Map<String, ElasticSearchConnection> populateRegistry() {
-        JCRCallback<Boolean> callback = new JCRCallback<Boolean>() {
-
-            public Boolean doInJCR(JCRSessionWrapper session) throws RepositoryException {
-                QueryResult queryResult = Utils.query("SELECT * FROM [" + ElasticSearchConnection.NODE_TYPE + "]", session);
-                NodeIterator it = queryResult.getNodes();
-                while (it.hasNext()) {
-                    JCRNodeWrapper connectionNode = (JCRNodeWrapper) it.next();
-                    ElasticSearchConnection connection = (ElasticSearchConnection) nodeToConnection(connectionNode);
-                    registry.put(connection.getId(), connection);
-                }
-                return true;
+        JCRCallback<Boolean> callback = session -> {
+            QueryResult queryResult = getNodeTypes(session);
+            NodeIterator it = queryResult.getNodes();
+            while (it.hasNext()) {
+                JCRNodeWrapper connectionNode = (JCRNodeWrapper) it.next();
+                ElasticSearchConnection connection = (ElasticSearchConnection) nodeToConnection(connectionNode);
+                registry.put(connection.getId(), connection);
             }
+            return true;
         };
         try {
             jcrTemplate.doExecuteWithSystemSession(callback);
         } catch (RepositoryException e) {
-            logger.error(e.getMessage(), e);
+            logger.error("Unable to populate the registry", e);
         }
         return registry;
+    }
+
+    /**
+     * Get the node types (as JCR nodes) from the repository.
+     * If the server is not a processing server, wait for the cluster to synchronize the node types definition.
+     * TODO review this as per <a href="https://github.com/Jahia/jahia-private/issues/3394">Race condition when using newly created node types on bundle activation (in clustering env)</a>
+     *
+     * @param session the JCR session
+     * @return the query result
+     * @throws RepositoryException if an error occurs
+     */
+    private static QueryResult getNodeTypes(JCRSessionWrapper session) throws RepositoryException {
+        if (SettingsBean.getInstance().isProcessingServer()) {
+            // on a processing server, the node type should be available at this point
+            return query(session);
+        }
+        int retriesCount = 0;
+        while (retriesCount < MAX_RETRIES_COUNT) {
+            try {
+                return query(session);
+            } catch (NoSuchNodeTypeException e) {
+                logger.warn("Node type {} not available ({}), retrying in {} ms (attempt {}/{}) waiting for the cluster to synchronize the node types definition...", ElasticSearchConnection.NODE_TYPE, e.getMessage(), RETRY_INTERVAL_MS, retriesCount, MAX_RETRIES_COUNT);
+                try {
+                    Thread.sleep(RETRY_INTERVAL_MS);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Thread was interrupted during retry sleep", ie);
+                }
+            }
+            retriesCount++;
+        }
+        throw new RepositoryException("Failed to get node types after " + MAX_RETRIES_COUNT + " retries");
+    }
+
+    private static QueryResult query(JCRSessionWrapper session) throws RepositoryException {
+        return Utils.query("SELECT * FROM [" + ElasticSearchConnection.NODE_TYPE + "]", session);
     }
 
     @Override
