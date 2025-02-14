@@ -149,6 +149,7 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
             try {
                 return query(session);
             } catch (NoSuchNodeTypeException e) {
+                retriesCount++;
                 logger.warn("Node type {} not available ({}), retrying in {} ms (attempt {}/{}) waiting for the cluster to synchronize the node types definition...", ElasticSearchConnection.NODE_TYPE, e.getMessage(), RETRY_INTERVAL_MS, retriesCount, MAX_RETRIES_COUNT);
                 try {
                     Thread.sleep(RETRY_INTERVAL_MS);
@@ -157,7 +158,6 @@ public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionR
                     throw new RuntimeException("Thread was interrupted during retry sleep", ie);
                 }
             }
-            retriesCount++;
         }
         throw new RepositoryException("Failed to get node types after " + MAX_RETRIES_COUNT + " retries");
     }
