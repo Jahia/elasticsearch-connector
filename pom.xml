@@ -33,9 +33,9 @@
     </parent>
     <artifactId>elasticsearch-connector</artifactId>
     <name>Elastic Search Connector</name>
-    <version>3.4.0-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
-    <description>This is the custom module (ElasticSearch Connector) for running on a Digital Experience Manager server.</description>
+    <description>This module provides elasticsearch connections on Jahia CMS.</description>
 
     <scm>
         <connection>scm:git:git@github.com:Jahia/elasticsearch-connector.git</connection>
@@ -46,8 +46,7 @@
 
     <properties>
         <jahia-module-type>system</jahia-module-type>
-        <jahia-depends>database-connector</jahia-depends>
-        <jahia-module-signature>MCwCFDZnSh2aqA5mG1bA3EquBSdQug2QAhRBJhWk7TKewwz6pzzIECYcDyQ2MA==</jahia-module-signature>
+        <jahia-module-signature>MCwCFHjPtw01JJHswb/oAuQApteW49rVAhQ3H78tiN6rwLd2dg80b/YoNcBAzg==</jahia-module-signature>
         <javaxws-annotations.version>1.1.1</javaxws-annotations.version>
         <jersey.version>2.18</jersey.version>
         <elasticsearch.version>7.13.2</elasticsearch.version>
@@ -154,12 +153,6 @@
             <groupId>org.eclipse.gemini.blueprint</groupId>
             <artifactId>gemini-blueprint-core</artifactId>
             <version>${gemini.blueprint.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jahia.modules</groupId>
-            <artifactId>database-connector</artifactId>
-            <version>1.2.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -323,22 +316,12 @@
                     <instructions>
                         <_invalidfilenames>CON(\..+)?|PRN(\..+)?|AUX(\..+)?|NUL(\..+)?|COM[1-9](\..+)?|LPT[1-9](\..+)?|\$Mft|\$MftMirr|\$LogFile|\$Volume|\$AttrDef|\$Bitmap|\$Boot|\$BadClus|\$Secure|\$Upcase|\$Extend|\$Quota|\$ObjId|\$Reparse</_invalidfilenames>
                         <_dsannotations>*</_dsannotations>
-                        <Jahia-Module-Priority>3</Jahia-Module-Priority>
-                        <JAX-RS-Alias>/dbconn/elasticsearch</JAX-RS-Alias>
-                        <JAX-RS-Application>org.jahia.modules.elasticsearchconnector.api.ECApiApplication</JAX-RS-Application>
                         <Import-Package>
                             com.unboundid.util;resolution:=optional,
                             !org.elasticsearch.xpack.*,
                             !org.elasticsearch.xpack.client.*,
                             org.elasticsearch;resolution:=optional,
                             org.elasticsearch.*;resolution:=optional,
-                            org.jahia.modules.databaseConnector.api.filters,
-                            org.jahia.modules.databaseConnector.services,
-                            org.jahia.modules.databaseConnector.connection,
-                            org.jahia.modules.databaseConnector.util,
-                            org.jahia.modules.databaseConnector.connector,
-                            org.jahia.modules.databaseConnector.taglib,
-                            org.jahia.modules.databaseConnector,
                             org.json;version="[20070829, 20231014)",
                             ${jahia.plugin.projectPackageImport},
                             *

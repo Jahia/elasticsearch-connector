@@ -2,7 +2,7 @@ package org.jahia.modules.elasticsearchconnector.rest;
 
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.jahia.modules.databaseConnector.services.ConnectionService;
+import org.jahia.modules.elasticsearchconnector.connection.ConnectionService;
 
 import java.io.IOException;
 

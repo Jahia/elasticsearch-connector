@@ -23,14 +23,9 @@
  */
 package org.jahia.modules.elasticsearchconnector.connection;
 
+import org.apache.commons.lang.ClassUtils;
 import org.apache.commons.lang.StringUtils;
-import org.jahia.modules.databaseConnector.connection.AbstractConnection;
-import org.jahia.modules.databaseConnector.connection.AbstractDatabaseConnectionRegistry;
-import org.jahia.modules.databaseConnector.services.DatabaseConnectionRegistry;
-import org.jahia.modules.databaseConnector.services.DatabaseConnectorService;
-import org.jahia.modules.databaseConnector.util.Utils;
 import org.jahia.modules.elasticsearchconnector.ESConstants;
-import org.jahia.modules.elasticsearchconnector.api.ECApi;
 import org.jahia.services.content.JCRCallback;
 import org.jahia.services.content.JCRNodeWrapper;
 import org.jahia.services.content.JCRSessionWrapper;
@@ -39,6 +34,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,259 +44,80 @@ import org.slf4j.LoggerFactory;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.query.QueryResult;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
-
-import static org.jahia.modules.elasticsearchconnector.connection.ElasticSearchConnection.NODE_TYPE;
 
 /**
  * 2017-05-17
  *
  * @author Astrit Ademi
  */
-@Component(service = {ElasticSearchConnectionRegistry.class, DatabaseConnectionRegistry.class}, immediate = true)
-public class ElasticSearchConnectionRegistry extends AbstractDatabaseConnectionRegistry<ElasticSearchConnection> {
+public class ElasticSearchConnectionRegistry {
 
     private static Logger logger = LoggerFactory.getLogger(ElasticSearchConnectionRegistry.class);
 
-    static final Pattern IDENTIFIER_PATTERN = Pattern.compile("^[\\w]+[\\w\\-]+[\\w]+$");
+    private static Map<String, ServiceRegistration> serviceRegistrations = new LinkedHashMap();
 
-    private DatabaseConnectorService databaseConnectorService = null;
 
-    /**
-     * Instantiate a new Registry
-     */
-    public ElasticSearchConnectionRegistry() {
-        super();
+    public static boolean registerAsService(AbstractConnection connection, BundleContext bundleContext) {
+        Object service = connection.beforeRegisterAsService();
+        return registerAsService(service, connection, bundleContext);
     }
 
-    /**
-     * Activation method called when bundle is activated
-     *
-     * @param context BundleContext of teh current OSGI context
-     */
-    @Activate
-    public void activate(BundleContext context) {
-        this.context = context;
-        this.setConnectorProperties(this.context.getBundle().getSymbolicName(), ElasticSearchConnectionRegistry.class.getName());
-        this.populateRegistry();
-        this.registerServices();
-    }
+    private static boolean registerAsService(Object object, AbstractConnection connection, BundleContext bundleContext) {
+        String[] messageArgs = new String[]{object.getClass().getSimpleName(), connection.getId()};
+        logger.info("Start registering OSGi service for {} for DatabaseConnection of type {} with id '{}'", messageArgs);
 
-    /**
-     * Deactivation method called when bundle is deactivated
-     *
-     * @param context BundleContext of teh current OSGI context
-     */
-    @Deactivate
-    public void deactivate(BundleContext context) {
-        this.closeConnections();
-    }
-
-    /**
-     * Inject Database Connector service
-     *
-     * @param databaseConnectorService the injected service
-     */
-    @Reference(cardinality = ReferenceCardinality.MANDATORY, policy = ReferencePolicy.STATIC, service = DatabaseConnectorService.class)
-    public void setDatabaseConnectorService(DatabaseConnectorService databaseConnectorService) {
-        this.databaseConnectorService = databaseConnectorService;
-    }
-
-    @Override
-    public Map<String, ElasticSearchConnection> populateRegistry() {
-        JCRCallback<Boolean> callback = new JCRCallback<Boolean>() {
-
-            public Boolean doInJCR(JCRSessionWrapper session) throws RepositoryException {
-                QueryResult queryResult = Utils.query("SELECT * FROM [" + ElasticSearchConnection.NODE_TYPE + "]", session);
-                NodeIterator it = queryResult.getNodes();
-                while (it.hasNext()) {
-                    JCRNodeWrapper connectionNode = (JCRNodeWrapper) it.next();
-                    ElasticSearchConnection connection = (ElasticSearchConnection) nodeToConnection(connectionNode);
-                    registry.put(connection.getId(), connection);
-                }
-                return true;
-            }
-        };
+        ServiceReference[] serviceReferences;
         try {
-            jcrTemplate.doExecuteWithSystemSession(callback);
-        } catch (RepositoryException e) {
-            logger.error(e.getMessage(), e);
+            serviceReferences = bundleContext.getAllServiceReferences(ConnectionService.class.getName(), createFilter(connection.getId()));
+        } catch (InvalidSyntaxException var6) {
+            logger.error(var6.getMessage(), var6);
+            return false;
         }
-        return registry;
-    }
 
-    @Override
-    protected boolean beforeAddEditConnection(AbstractConnection connection, boolean isEdition) {
-        return true;
-    }
-
-    @Override
-    protected void storeAdvancedConfig(AbstractConnection connection, JCRNodeWrapper node) throws RepositoryException {
-        // Historically bad interface design will be fixed in next Major overhaul
-    }
-
-    @Override
-    protected String getConnectionNodeType() {
-        return NODE_TYPE;
-    }
-
-    @Override
-    public void importConnection(Map<String, Object> map) {
-        String identifier = (String) map.get(ESConstants.IDENTIFIERKEY);
-        try {
-            if (!IDENTIFIER_PATTERN.matcher(identifier).matches()) {
-                map.put(ESConstants.STATUSKEY, ESConstants.FAILED);
-                map.put(ESConstants.STATUS_MESSAGEKEY, "invalidIdentifier");
-                //Create instance to be able to parse the options of a failed connection.
-                if (map.containsKey(ESConstants.OPTIONSKEY)) {
-                    ElasticSearchConnection connection = new ElasticSearchConnection(identifier);
-                    map.put(ESConstants.OPTIONSKEY, connection.parseOptions((LinkedHashMap) map.get(ESConstants.OPTIONSKEY)));
-                }
-            } else if (databaseConnectorService.hasConnection(identifier, (String) map.get("type"))) {
-                map.put(ESConstants.STATUSKEY, ESConstants.FAILED);
-                map.put(ESConstants.STATUS_MESSAGEKEY, "connectionExists");
-                //Create instance to be able to parse the options of a failed connection.
-                if (map.containsKey(ESConstants.OPTIONSKEY)) {
-                    ElasticSearchConnection connection = new ElasticSearchConnection(identifier);
-                    map.put(ESConstants.OPTIONSKEY, connection.parseOptions((LinkedHashMap) map.get(ESConstants.OPTIONSKEY)));
-                }
-            } else {
-                createConnectionFromImportedMap(map, identifier);
-            }
-
-        } catch (Exception ex) {
-            map.put(ESConstants.STATUSKEY, ESConstants.FAILED);
-            map.put(ESConstants.STATUS_MESSAGEKEY, "creationFailed");
-            if (map.containsKey(ESConstants.OPTIONSKEY) && map.get(ESConstants.OPTIONSKEY) instanceof LinkedHashMap) {
-                ElasticSearchConnection connection = new ElasticSearchConnection(identifier);
-                map.put(ESConstants.OPTIONSKEY, connection.parseOptions((LinkedHashMap) map.get(ESConstants.OPTIONSKEY)));
-            }
-            logger.error("Import of {} failed with {}", new Object[]{identifier, ex.getMessage()}, ex);
-        }
-    }
-
-    private void createConnectionFromImportedMap(Map<String, Object> map, String identifier) {
-        //Create connection object
-        ElasticSearchConnection connection = new ElasticSearchConnection(identifier);
-        String host = map.containsKey("host") ? (String) map.get("host") : null;
-        Integer port = map.containsKey("port") ? Integer.parseInt((String) map.get("port")) : ElasticSearchConnection.DEFAULT_PORT;
-        Boolean isConnected = map.containsKey(ESConstants.IS_CONNECTED) && Boolean.parseBoolean((String) map.get(ESConstants.IS_CONNECTED));
-        String username = map.containsKey("user") ? (String) map.get("user") : null;
-        String options = map.containsKey(ESConstants.OPTIONSKEY) ? connection.parseOptions((LinkedHashMap) map.get(ESConstants.OPTIONSKEY)) : null;
-        map.put(ESConstants.OPTIONSKEY, options);
-
-        connection.setHost(host);
-        connection.setPort(port);
-        connection.isConnected(isConnected);
-        connection.setOptions(options);
-        connection.setUser(username);
-
-        addEditConnection(connection, false);
-        map.put(ESConstants.STATUSKEY, "success");
-    }
-
-    @Override
-    public String getConnectionType() {
-        return ElasticSearchConnection.DATABASE_TYPE;
-    }
-
-    @Override
-    public String getConnectionDisplayName() {
-        return ElasticSearchConnection.DISPLAY_NAME;
-    }
-
-    @Override
-    public String getEntryPoint() {
-        return ECApi.ENTRY_POINT;
-    }
-
-    @Override
-    public Map<String, Object> prepareConnectionMapFromJSON(Map<String, Object> result, JSONObject jsonConnectionData) throws JSONException {
-        JSONArray missingParameters = new JSONArray();
-        String reImportKey = "reImport";
-        if (jsonConnectionData.has(reImportKey)) {
-            result.put(reImportKey, jsonConnectionData.getString(reImportKey));
-        }
-        if (!jsonConnectionData.has("id") || StringUtils.isEmpty(jsonConnectionData.getString("id"))) {
-            missingParameters.put("id");
-        }
-        if (!jsonConnectionData.has("host") || StringUtils.isEmpty(jsonConnectionData.getString("host"))) {
-            missingParameters.put("host");
-        }
-        if (missingParameters.length() > 0) {
-            result.put("connectionStatus", ESConstants.FAILED);
+        if (serviceReferences != null) {
+            logger.info("OSGi service for {} already registered for DatabaseConnection of type {} with id '{}'", messageArgs);
+            return true;
         } else {
-            createConnectionFromJSON(result, jsonConnectionData);
+            ServiceRegistration serviceRegistration = bundleContext.registerService(getInterfacesNames(object), object, createProperties(connection.getId()));
+            serviceRegistrations.put(connection.getId(), serviceRegistration);
+            logger.info("OSGi service for {} successfully registered for DatabaseConnection of type {} with id '{}'", messageArgs);
+            return true;
         }
-        return result;
     }
 
-    private void createConnectionFromJSON(Map<String, Object> result, JSONObject jsonConnectionData) throws JSONException {
-        String id = jsonConnectionData.getString("id");
-        String host = jsonConnectionData.getString("host");
-        Integer port = null;
-        try {
-            port = jsonConnectionData.getInt("port");
-        } catch (JSONException e) { /* Do nothing; default to null */ }
-        Boolean isConnected = jsonConnectionData.has(ESConstants.IS_CONNECTED) && jsonConnectionData.getBoolean(ESConstants.IS_CONNECTED);
-        String options = jsonConnectionData.has(ESConstants.OPTIONSKEY) ? jsonConnectionData.get(ESConstants.OPTIONSKEY).toString() : null;
-        String password = jsonConnectionData.has(ESConstants.CREDKEY) ? jsonConnectionData.getString(ESConstants.CREDKEY) : null;
-        String user = jsonConnectionData.has("user") ? jsonConnectionData.getString("user") : null;
-
-        ElasticSearchConnection connection = new ElasticSearchConnection(id);
-
-        connection.setHost(host);
-        connection.setPort(port);
-        connection.setUser(user);
-        connection.isConnected(isConnected);
-        if (password != null && password.contains("_ENC")) {
-            password = password.substring(0, 32);
-            password = EncryptionUtils.passwordBaseDecrypt(password);
+    public static void unregisterAsService(AbstractConnection connection) {
+        connection.beforeUnregisterAsService();
+        logger.info("Start unregistering OSGi services for Elasticseach connection with id '{}'", connection.getId());
+        ServiceRegistration serviceRegistration = (ServiceRegistration) serviceRegistrations.get(connection.getId());
+        if (serviceRegistration != null) {
+            serviceRegistration.unregister();
+            serviceRegistrations.remove(connection.getId());
         }
-        connection.setPassword(password);
-        connection.setOptions(options);
-        result.put("connectionStatus", "success");
-        result.put("connection", connection);
+        logger.info("OSGi services successfully unregistered for Elasticseach connection with id '{}'", connection.getId());
     }
 
-    @Override
-    public Map<String, Object> prepareConnectionMapFromConnection(AbstractConnection connection) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("id", connection.getId());
-        result.put("host", connection.getHost());
-        result.put(ESConstants.IS_CONNECTED, connection.isConnected());
-        result.put("databaseType", connection.getDatabaseType());
-        result.put(ESConstants.OPTIONSKEY, connection.getOptions());
-        if (!StringUtils.isEmpty(connection.getPassword())) {
-            result.put(ESConstants.CREDKEY, EncryptionUtils.passwordBaseEncrypt(connection.getPassword()) + "_ENC");
+    private static String[] getInterfacesNames(Object obj) {
+        List<Class<?>> interfaces = ClassUtils.getAllInterfaces(obj.getClass());
+        List<String> interfacesNames = new ArrayList();
+        Iterator var4 = interfaces.iterator();
 
+        while(var4.hasNext()) {
+            Class<?> interfaceClass = (Class)var4.next();
+            interfacesNames.add(interfaceClass.getName());
         }
-        result.put("user", connection.getUser());
-        return result;
+
+        return (String[])interfacesNames.toArray(new String[0]);
     }
 
-    @Override
-    public AbstractConnection nodeToConnection(JCRNodeWrapper connectionNode) throws RepositoryException {
-        //TODO why do we call this method a setter when it is not setting anything and is there a way we can simplify "isMandatory" mechanism???
-        String id = setStringConnectionProperty(connectionNode, ElasticSearchConnection.ID_PROPERTY, true);
-        String host = setStringConnectionProperty(connectionNode, ElasticSearchConnection.HOST_PROPERTY, true);
-        String connectionType = setStringConnectionProperty(connectionNode, ElasticSearchConnection.DATABASE_TYPE_PROPETRY, true);
-        Integer port = setIntegerConnectionProperty(connectionNode, ElasticSearchConnection.PORT_PROPERTY, true);
-        Boolean isConnected = setBooleanConnectionProperty(connectionNode, ElasticSearchConnection.IS_CONNECTED_PROPERTY);
-        String options = setStringConnectionProperty(connectionNode, ElasticSearchConnection.OPTIONS_PROPERTY, false);
-        String password = decodePassword(connectionNode, ElasticSearchConnection.PASSWORD_PROPERTY);
-        String user = setStringConnectionProperty(connectionNode, ElasticSearchConnection.USER_PROPERTY, false);
-        ElasticSearchConnection storedConnection = new ElasticSearchConnection(id);
-        storedConnection.setOldId(id);
-        storedConnection.setHost(host);
-        storedConnection.setPort(port);
-        storedConnection.isConnected(isConnected);
-        storedConnection.setOptions(options);
-        storedConnection.setDatabaseType(connectionType);
-        storedConnection.setUser(user);
-        storedConnection.setPassword(password);
-        return storedConnection;
+    private static Hashtable<String, String> createProperties(String connectionId) {
+        Hashtable<String, String> properties = new Hashtable();
+        properties.put("connectionId", connectionId);
+        return properties;
+    }
+
+    public static String createFilter(String connectionId) {
+        return "(&(" + "connectionId" + "=" + connectionId + "))";
     }
 }
