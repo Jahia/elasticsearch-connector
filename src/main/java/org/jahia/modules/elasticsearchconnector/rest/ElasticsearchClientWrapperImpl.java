@@ -2,7 +2,6 @@ package org.jahia.modules.elasticsearchconnector.rest;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.GetRequest;
-import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.transport.rest5_client.low_level.Request;
 import co.elastic.clients.transport.rest5_client.low_level.Response;
 import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
@@ -49,7 +48,7 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
             Response get = getRest5Client().performRequest(request);
             return EntityUtils.toString(get.getEntity());
         } else {
-            throw new IOException("Only GET methods are supported");
+            throw new IOException("Only GET methods are supported for low level client");
         }
     }
 

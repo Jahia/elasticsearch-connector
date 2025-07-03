@@ -14,4 +14,5 @@ public class ESConstants {
     public static final String STATUSKEY = "status";
     public static final String FAILED = "failed";
     public static final String STATUS_MESSAGEKEY = "statusMessage";
+    public static final String EVENT_TOPIC = "org/jahia/modules/elasticsearch-connector";
 }
