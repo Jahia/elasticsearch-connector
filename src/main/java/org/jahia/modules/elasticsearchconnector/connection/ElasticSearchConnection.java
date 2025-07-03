@@ -30,26 +30,20 @@ import co.elastic.clients.elasticsearch.core.InfoResponse;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
+import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
+import co.elastic.clients.transport.rest5_client.low_level.sniffer.ElasticsearchNodesSniffer;
+import co.elastic.clients.transport.rest5_client.low_level.sniffer.SniffOnFailureListener;
+import co.elastic.clients.transport.rest5_client.low_level.sniffer.Sniffer;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
-import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
-import org.apache.http.impl.nio.reactor.IOReactorConfig;
-import org.apache.http.nio.conn.ssl.SSLIOSessionStrategy;
-import org.apache.http.nio.reactor.IOReactorException;
-import org.apache.http.ssl.SSLContexts;
-import org.apache.http.ssl.TrustStrategy;
-import org.elasticsearch.client.*;
-import org.elasticsearch.client.sniff.ElasticsearchNodesSniffer;
-import org.elasticsearch.client.sniff.SniffOnFailureListener;
-import org.elasticsearch.client.sniff.Sniffer;
+import org.apache.hc.client5.http.ssl.TrustSelfSignedStrategy;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.message.BasicHeader;
+import org.apache.hc.core5.reactor.ssl.SSLIOSession;
+import org.apache.hc.core5.ssl.SSLContexts;
+import org.apache.hc.core5.ssl.TrustStrategy;
 import org.jahia.modules.databaseConnector.connection.AbstractConnection;
 import org.jahia.modules.databaseConnector.connection.ConnectionData;
 import org.jahia.modules.elasticsearchconnector.ESConstants;
@@ -66,10 +60,14 @@ import org.slf4j.LoggerFactory;
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.jahia.modules.databaseConnector.util.Utils.*;
 
@@ -97,7 +95,6 @@ public class ElasticSearchConnection extends AbstractConnection {
 
     private transient ElasticsearchClientWrapper esElasticsearchClientWrapper;
     private transient Sniffer esSniffer;
-    private transient PoolingNHttpClientConnectionManager connectionManager = null;
     private static final String USE_SECURITY_KEY = "useXPackSecurity";
     private static final String NODE_SNIFFER_INTERVAL_KEY = "nodesSnifferInterval";
     private static final String USE_ENCRYPTION_KEY = "useEncryption";
@@ -215,7 +212,7 @@ public class ElasticSearchConnection extends AbstractConnection {
     @Override
     public Object beforeRegisterAsService() {
         if(esElasticsearchClientWrapper == null) {
-            esElasticsearchClientWrapper = new ElasticsearchClientWrapperImpl(resolveClient(true, false));
+            esElasticsearchClientWrapper = resolveClient(true, false);
         }
         return esElasticsearchClientWrapper;
     }
@@ -238,28 +235,14 @@ public class ElasticSearchConnection extends AbstractConnection {
                 logger.error(e.getMessage(), e);
             }
         }
-
-        PoolingNHttpClientConnectionManager manager = getConnectionManager();
-        if (manager != null) {
-            try {
-                if (logger.isInfoEnabled()) {
-                    logger.info("Shutting down underlying connection manager,\n statistics {}", manager.getTotalStats());
-                }
-                manager.shutdown();
-            } catch (IOException e) {
-                logger.error(e.getMessage(), e);
-            } finally {
-                connectionManager = null;
-            }
-        }
     }
 
     @Override
     public boolean testConnectionCreation() {
-        ElasticsearchClient transportClientService = null;
+        ElasticsearchClientWrapper transportClientService = null;
         try {
             transportClientService = resolveClient(false, true);
-            return transportClientService.ping().value();
+            return transportClientService.getClient().ping().value();
         } catch (ConnectException e) {
             logger.warn("Failed to create/ping connection due to: {}", e.getMessage());
             return false;
@@ -269,7 +252,7 @@ public class ElasticSearchConnection extends AbstractConnection {
         } finally {
             if (transportClientService != null) {
                 try {
-                    transportClientService.close();
+                    transportClientService.getClient().close();
                 } catch (IOException e) {
                     logger.error(e.getMessage(), e);
                 }
@@ -373,7 +356,7 @@ public class ElasticSearchConnection extends AbstractConnection {
         return CONNECTION_BASE + "/" + JCRContentUtils.generateNodeName(getId());
     }
 
-    private ElasticsearchClient resolveClient(boolean snifferToBeAdded, boolean testingOnly) {
+    private ElasticsearchClientWrapper resolveClient(boolean snifferToBeAdded, boolean testingOnly) {
         List<HttpHost> addresses = new ArrayList<>();
         int snifferInterval = DEFAULT_NODES_SNIFFER_INTERVAL;
         boolean useSSL = false;
@@ -387,29 +370,23 @@ public class ElasticSearchConnection extends AbstractConnection {
             protocolScheme = elasticsearchClientSettings.getProtocolScheme();
             addresses.addAll(elasticsearchClientSettings.getAddresses());
         }
-        addresses.add(0, new HttpHost(host, port, protocolScheme));
+        addresses.add(0, new HttpHost(protocolScheme, host, port));
 
-        RestClientBuilder builder = RestClient.builder(addresses.toArray(new HttpHost[0]));
-        builder.setRequestConfigCallback(
-                requestConfigBuilder -> requestConfigBuilder
-                        .setConnectTimeout(30000)
-                        .setSocketTimeout(60000 * 5));
+        Rest5ClientBuilder builder = Rest5Client.builder(addresses.stream().map(HttpHost::toURI).map(u -> {
+            try {
+                return new URI(u);
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList()));
 
-        PoolingNHttpClientConnectionManager manager = getConnectionManager();
-        if (!testingOnly && manager != null) {
-            builder.setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setConnectionManager(manager)
-                    .setDefaultIOReactorConfig(IOReactorConfig.custom()
-                            .setTcpNoDelay(false)
-                            .setSoKeepAlive(true)
-                            .build()));
-        }
         //If SSL or security is enabled handle the configuration
         if (useSSL || (StringUtils.isNotEmpty(user) && StringUtils.isNotEmpty(password))) {
             handleSecurityConfiguration(builder);
         }
 
-        RestClient restClient = builder.build();
-        ElasticsearchTransport transport = new RestClientTransport(
+        Rest5Client restClient = builder.build();
+        ElasticsearchTransport transport = new Rest5ClientTransport(
                 restClient, new JacksonJsonpMapper());
         ElasticsearchClient esClient = new ElasticsearchClient(transport);
 
@@ -428,50 +405,41 @@ public class ElasticSearchConnection extends AbstractConnection {
                                .build();
             sniffOnFailureListener.setSniffer(esSniffer);
         }
-        return esClient;
+
+        return new ElasticsearchClientWrapperImpl(esClient, restClient);
     }
 
-    private void handleSecurityConfiguration(RestClientBuilder restClientBuilder) {
+    private void handleSecurityConfiguration(Rest5ClientBuilder restClientBuilder) {
         try {
             //Handle SSL
-            final SSLIOSessionStrategy sslioSessionStrategy;
+            // TODO looks like this might have been replaced by SSLConnectionSocketFactory in http5? Is it still necessary?
+            //final SSLIOSessionStrategy sslioSessionStrategy;
             final SSLContext sslContext;
             if (SettingsBean.getInstance().isDevelopmentMode()) {
                 //When in development trust own CA and all self-signed certs
                 sslContext = SSLContexts.custom().loadTrustMaterial(null, new TrustSelfSignedStrategy()).build();
                 //Turn off hostname verification in development mode. Default SSL protocol and cipher suites are used.
-                sslioSessionStrategy = new SSLIOSessionStrategy(sslContext, NoopHostnameVerifier.INSTANCE);
+                //sslioSessionStrategy = new SSLIOSessionStrategy(sslContext, NoopHostnameVerifier.INSTANCE);
             } else {
                 //Use default jvm truststore
                 sslContext = SSLContexts.custom().loadTrustMaterial((TrustStrategy) null).build();
                 //Use default SSL protocol, cipher suites and host name verification
-                sslioSessionStrategy = new SSLIOSessionStrategy(sslContext);
+                //sslioSessionStrategy = new SSLIOSessionStrategy(sslContext);
             }
             //Set credentials for connection
-            final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-            credentialsProvider.setCredentials(AuthScope.ANY,
-                                               new UsernamePasswordCredentials(user, password));
-            restClientBuilder.setHttpClientConfigCallback(httpAsyncClientBuilder -> httpAsyncClientBuilder
-                    .setSSLContext(sslContext)
-                    .setSSLStrategy(sslioSessionStrategy)
-                    .setDefaultCredentialsProvider(credentialsProvider)
-            );
+            String cred = Base64.getEncoder().encodeToString((user + ":" + password).getBytes());
+            restClientBuilder.setDefaultHeaders(new Header[]{
+                    new BasicHeader("Authorization", "Basic " + cred)
+            });
+            restClientBuilder.setSSLContext(sslContext);
+//            restClientBuilder.setHttpClientConfigCallback(httpAsyncClientBuilder -> httpAsyncClientBuilder
+//                    .setSSLContext(sslContext)
+//                    .setSSLStrategy(sslioSessionStrategy)
+//                    .setDefaultCredentialsProvider(credentialsProvider)
+//            );
         } catch (GeneralSecurityException ex) {
             logger.error("Failed to configure SSL context when configuring ES Rest Client", ex);
         }
-    }
-
-    private PoolingNHttpClientConnectionManager getConnectionManager() {
-        if (connectionManager == null) {
-            try {
-                connectionManager = new PoolingNHttpClientConnectionManager(new DefaultConnectingIOReactor());
-                connectionManager.setDefaultMaxPerRoute(10);
-                connectionManager.setMaxTotal(30);
-            } catch (IOReactorException ex) {
-                logger.error("Failed to create connection Manager due to: {}", ex.getMessage(), ex);
-            }
-        }
-        return connectionManager;
     }
 
     private class ElasticsearchClientSettings {
@@ -533,7 +501,7 @@ public class ElasticSearchConnection extends AbstractConnection {
                 for (int i = 0; i < hostAddresses.length(); i++) {
                     JSONObject hostAddress = hostAddresses.getJSONObject(i);
                     int port = hostAddress.optInt("port", DEFAULT_PORT);
-                    addresses.add(new HttpHost(hostAddress.getString("host"), port, protocolScheme));
+                    addresses.add(new HttpHost(protocolScheme, hostAddress.getString("host"), port));
                 }
             }
         }

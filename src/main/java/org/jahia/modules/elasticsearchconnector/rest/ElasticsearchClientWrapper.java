@@ -1,7 +1,10 @@
 package org.jahia.modules.elasticsearchconnector.rest;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import org.elasticsearch.client.Request;
+import co.elastic.clients.elasticsearch.core.GetRequest;
+import co.elastic.clients.transport.rest5_client.low_level.Request;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
+import org.apache.hc.core5.http.ParseException;
 import org.jahia.modules.databaseConnector.services.ConnectionService;
 
 import java.io.IOException;
@@ -11,7 +14,9 @@ import java.io.IOException;
  */
 public interface ElasticsearchClientWrapper extends ConnectionService {
     ElasticsearchClient getClient();
-    String performRequest(Request request) throws IOException;
+    Rest5Client getRest5Client();
+    String performRequest(GetRequest request) throws IOException;
+    String performRequest(Request request) throws IOException, ParseException;
 
     /**
      *
