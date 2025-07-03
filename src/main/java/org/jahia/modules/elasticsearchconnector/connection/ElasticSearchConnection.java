@@ -23,6 +23,14 @@
  */
 package org.jahia.modules.elasticsearchconnector.connection;
 
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch.cluster.ClusterStatsResponse;
+import co.elastic.clients.elasticsearch.cluster.HealthResponse;
+import co.elastic.clients.elasticsearch.core.InfoResponse;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.ElasticsearchTransport;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -38,21 +46,15 @@ import org.apache.http.nio.conn.ssl.SSLIOSessionStrategy;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
-import org.apache.http.util.EntityUtils;
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
-import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.client.*;
-import org.elasticsearch.client.core.MainResponse;
 import org.elasticsearch.client.sniff.ElasticsearchNodesSniffer;
 import org.elasticsearch.client.sniff.SniffOnFailureListener;
 import org.elasticsearch.client.sniff.Sniffer;
 import org.jahia.modules.databaseConnector.connection.AbstractConnection;
 import org.jahia.modules.databaseConnector.connection.ConnectionData;
 import org.jahia.modules.elasticsearchconnector.ESConstants;
-import org.jahia.modules.elasticsearchconnector.rest.ElasticRestHighLevelClient;
-import org.jahia.modules.elasticsearchconnector.rest.ElasticRestHighLevelClientImpl;
+import org.jahia.modules.elasticsearchconnector.rest.ElasticsearchClientWrapper;
+import org.jahia.modules.elasticsearchconnector.rest.ElasticsearchClientWrapperImpl;
 import org.jahia.services.content.JCRContentUtils;
 import org.jahia.settings.SettingsBean;
 import org.json.JSONArray;
@@ -93,7 +95,7 @@ public class ElasticSearchConnection extends AbstractConnection {
     private static final char APOSTROPHE = 0x0027;
     private static final long SNIFF_REQUEST_TIMEOUT_MILLIS = 5000L;
 
-    private transient ElasticRestHighLevelClient esRestHighLevelClient;
+    private transient ElasticsearchClientWrapper esElasticsearchClientWrapper;
     private transient Sniffer esSniffer;
     private transient PoolingNHttpClientConnectionManager connectionManager = null;
     private static final String USE_SECURITY_KEY = "useXPackSecurity";
@@ -212,10 +214,10 @@ public class ElasticSearchConnection extends AbstractConnection {
 
     @Override
     public Object beforeRegisterAsService() {
-        if(esRestHighLevelClient == null) {
-            esRestHighLevelClient = new ElasticRestHighLevelClientImpl(resolveClient(true, false));
+        if(esElasticsearchClientWrapper == null) {
+            esElasticsearchClientWrapper = new ElasticsearchClientWrapperImpl(resolveClient(true, false));
         }
-        return esRestHighLevelClient;
+        return esElasticsearchClientWrapper;
     }
 
     @Override
@@ -228,10 +230,10 @@ public class ElasticSearchConnection extends AbstractConnection {
             esSniffer.close();
             esSniffer = null;
         }
-        if (esRestHighLevelClient != null) {
+        if (esElasticsearchClientWrapper != null) {
             try {
-                esRestHighLevelClient.getClient().close();
-                esRestHighLevelClient = null;
+                esElasticsearchClientWrapper.getClient().close();
+                esElasticsearchClientWrapper = null;
             } catch (IOException e) {
                 logger.error(e.getMessage(), e);
             }
@@ -254,11 +256,11 @@ public class ElasticSearchConnection extends AbstractConnection {
 
     @Override
     public boolean testConnectionCreation() {
-        RestHighLevelClient transportClientService = null;
+        ElasticsearchClient transportClientService = null;
         try {
             transportClientService = resolveClient(false, true);
-            return transportClientService.ping(RequestOptions.DEFAULT);
-        } catch (ElasticsearchStatusException | ConnectException e) {
+            return transportClientService.ping().value();
+        } catch (ConnectException e) {
             logger.warn("Failed to create/ping connection due to: {}", e.getMessage());
             return false;
         } catch (IOException | ElasticsearchException e) {
@@ -303,19 +305,19 @@ public class ElasticSearchConnection extends AbstractConnection {
             connectionData.put("status", status);
             connectionData.put("aboutConnection", aboutConnection);
 
-            ClusterHealthRequest request = new ClusterHealthRequest();
-            ClusterHealthResponse healthResponse = esRestHighLevelClient.getClient().cluster().health(request, RequestOptions.DEFAULT);
-            // Compile cluster status information
-            status.put("numberOfNodes", healthResponse.getNumberOfNodes());
-            status.put("activeShards", healthResponse.getActiveShards());
-            status.put("unassignedShards", healthResponse.getUnassignedShards());
-            status.put("numberOfPendingTasks", healthResponse.getNumberOfPendingTasks());
-            status.put("status", healthResponse.getStatus());
+            HealthResponse hr = esElasticsearchClientWrapper.getClient().cluster().health();
 
-            MainResponse mainResponse = esRestHighLevelClient.getClient().info(RequestOptions.DEFAULT);
-            aboutConnection.put("dbVersion", mainResponse.getVersion().getNumber());
-            Response get = esRestHighLevelClient.getClient().getLowLevelClient().performRequest(new Request("GET", "/_cluster/stats"));
-            String responseBody = EntityUtils.toString(get.getEntity());
+            // Compile cluster status information
+            status.put("numberOfNodes", hr.numberOfNodes());
+            status.put("activeShards", hr.activeShards());
+            status.put("unassignedShards", hr.unassignedShards());
+            status.put("numberOfPendingTasks", hr.numberOfPendingTasks());
+            status.put("status", hr.status());
+
+            InfoResponse info = esElasticsearchClientWrapper.getClient().info();
+            aboutConnection.put("dbVersion", info.version().number());
+            ClusterStatsResponse sr = esElasticsearchClientWrapper.getClient().cluster().stats();
+            String responseBody = sr.nodeStats().toString();
             JSONObject jsonObject = new JSONObject(responseBody);
             status.put("statistics", jsonObject);
         } catch (JSONException | IOException e) {
@@ -371,7 +373,7 @@ public class ElasticSearchConnection extends AbstractConnection {
         return CONNECTION_BASE + "/" + JCRContentUtils.generateNodeName(getId());
     }
 
-    private RestHighLevelClient resolveClient(boolean snifferToBeAdded, boolean testingOnly) {
+    private ElasticsearchClient resolveClient(boolean snifferToBeAdded, boolean testingOnly) {
         List<HttpHost> addresses = new ArrayList<>();
         int snifferInterval = DEFAULT_NODES_SNIFFER_INTERVAL;
         boolean useSSL = false;
@@ -405,8 +407,12 @@ public class ElasticSearchConnection extends AbstractConnection {
         if (useSSL || (StringUtils.isNotEmpty(user) && StringUtils.isNotEmpty(password))) {
             handleSecurityConfiguration(builder);
         }
-        RestHighLevelClient restHighLevelClient = new RestHighLevelClient(builder);
-        RestClient lowLevelClient = restHighLevelClient.getLowLevelClient();
+
+        RestClient restClient = builder.build();
+        ElasticsearchTransport transport = new RestClientTransport(
+                restClient, new JacksonJsonpMapper());
+        ElasticsearchClient esClient = new ElasticsearchClient(transport);
+
         if (snifferToBeAdded && snifferInterval > 0) {
             SniffOnFailureListener sniffOnFailureListener = new SniffOnFailureListener();
             builder.setFailureListener(sniffOnFailureListener);
@@ -415,14 +421,14 @@ public class ElasticSearchConnection extends AbstractConnection {
             if (!protocolScheme.equals(DEFAULT_PROTOCOL_SCHEME)) {
                 scheme = ElasticsearchNodesSniffer.Scheme.HTTPS;
             }
-            ElasticsearchNodesSniffer nodesSniffer = new ElasticsearchNodesSniffer(lowLevelClient, SNIFF_REQUEST_TIMEOUT_MILLIS, scheme);
-            esSniffer = Sniffer.builder(lowLevelClient)
+            ElasticsearchNodesSniffer nodesSniffer = new ElasticsearchNodesSniffer(restClient, SNIFF_REQUEST_TIMEOUT_MILLIS, scheme);
+            esSniffer = Sniffer.builder(restClient)
                                .setSniffIntervalMillis(snifferInterval)
                                .setNodesSniffer(nodesSniffer)
                                .build();
             sniffOnFailureListener.setSniffer(esSniffer);
         }
-        return restHighLevelClient;
+        return esClient;
     }
 
     private void handleSecurityConfiguration(RestClientBuilder restClientBuilder) {
