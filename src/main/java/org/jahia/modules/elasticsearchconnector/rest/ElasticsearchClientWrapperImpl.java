@@ -61,11 +61,13 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
 
         if (sniffer != null) {
             sniffer.close();
+            sniffer = null;
         }
 
         if (client != null) {
             try {
                 client.close();
+                client = null;
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
