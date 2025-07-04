@@ -25,6 +25,7 @@ import org.apache.hc.core5.ssl.TrustStrategy;
 import org.jahia.modules.elasticsearchconnector.config.ElasticsearchConfig;
 import org.jahia.settings.SettingsBean;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,24 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
     private Rest5Client rest5Client;
     private ElasticsearchConfig elasticsearchConfig;
     private ElasticsearchConnection connection;
-    private Sniffer esSniffer;
+    private Sniffer sniffer;
+
+    @Deactivate
+    public void deactivate() {
+        connection = null;
+
+        if (sniffer != null) {
+            sniffer.close();
+        }
+
+        if (client != null) {
+            try {
+                client.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
 
     @Reference
     public void setElasticsearchConfig(ElasticsearchConfig elasticsearchConfig) {
@@ -130,11 +148,11 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
                 scheme = ElasticsearchNodesSniffer.Scheme.HTTPS;
             }
             ElasticsearchNodesSniffer nodesSniffer = new ElasticsearchNodesSniffer(restClient, 10000, scheme);
-            esSniffer = Sniffer.builder(restClient)
+            sniffer = Sniffer.builder(restClient)
                     .setSniffIntervalMillis(snifferInterval)
                     .setNodesSniffer(nodesSniffer)
                     .build();
-            sniffOnFailureListener.setSniffer(esSniffer);
+            sniffOnFailureListener.setSniffer(sniffer);
         }
 
         //this.rest5Client = restClient;
