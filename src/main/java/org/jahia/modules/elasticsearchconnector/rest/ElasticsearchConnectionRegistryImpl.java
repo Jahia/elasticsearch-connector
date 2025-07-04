@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.Hashtable;
 
 @Component(service = {ElasticsearchConnectionRegistry.class}, immediate = true, scope = ServiceScope.SINGLETON)
 public class ElasticsearchConnectionRegistryImpl implements ElasticsearchConnectionRegistry {
@@ -58,7 +59,7 @@ public class ElasticsearchConnectionRegistryImpl implements ElasticsearchConnect
             return null;
         } else {
             //TODO add props and use them on filter
-            ServiceRegistration serviceRegistration = ctx.registerService(ElasticsearchClientWrapper.class.getName(), object, null);
+            ServiceRegistration serviceRegistration = ctx.registerService(ElasticsearchClientWrapper.class.getName(), object, createProperties());
             logger.info("OSGi service for {} successfully registered for Elasticsearch connection of type {} with id '{}'", messageArgs);
             return serviceRegistration;
         }
@@ -76,5 +77,13 @@ public class ElasticsearchConnectionRegistryImpl implements ElasticsearchConnect
 
         FrameworkService.sendEvent(ESConstants.EVENT_TOPIC,
                 Collections.singletonMap("type", "elasticsearchClientUnregistered"), true);
+    }
+
+    private Hashtable<String, String> createProperties() {
+        Hashtable<String, String> properties = new Hashtable();
+        properties.put("databaseType", "ELASTICSEARCH");
+        properties.put("databaseId", "myId");
+        properties.put("connectionPath", "nopath");
+        return properties;
     }
 }
