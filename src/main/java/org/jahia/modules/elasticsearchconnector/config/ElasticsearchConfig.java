@@ -1,13 +1,13 @@
 package org.jahia.modules.elasticsearchconnector.config;
 
-import org.jahia.modules.elasticsearchconnector.connection.ElasticSearchConnection;
-import org.jahia.modules.elasticsearchconnector.rest.ElasticsearchConnectionRegistry;
+import org.jahia.modules.elasticsearchconnector.rest.ElasticsearchConnection;
+import org.jahia.services.modulemanager.util.PropertiesManager;
+import org.jahia.services.modulemanager.util.PropertiesValues;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Reference;
 
 import java.util.*;
 
@@ -18,7 +18,10 @@ import java.util.*;
 }, immediate = true)
 public class ElasticsearchConfig implements ManagedService {
 
-    private ElasticsearchConnectionRegistry elasticsearchConnectionRegistry;
+    private static final String CONFIG_NAMESPACE_PREFIX = "org.jahia.modules.elasticsearch-connector";
+
+    private ElasticsearchConnection connection;
+
 
     public ElasticsearchConfig() {
         super();
@@ -30,29 +33,43 @@ public class ElasticsearchConfig implements ManagedService {
 
     @Deactivate
     public void deactivate() {
-        if (elasticsearchConnectionRegistry != null) {
-            elasticsearchConnectionRegistry.unregisterAsService();
-        }
     }
 
-    @Reference
-    public void setConnectionRegistry(ElasticsearchConnectionRegistry connectionRegistry) {
-        this.elasticsearchConnectionRegistry = connectionRegistry;
-    }
 
     @Override
     public void updated(Dictionary<String, ?> dictionary) throws ConfigurationException {
         if (dictionary != null) {
-            elasticsearchConnectionRegistry.unregisterAsService();
+            PropertiesManager pm = new PropertiesManager(getMap(dictionary));
+            PropertiesValues values = pm.getValues();
+            // TODO handle value extraction here
 
-            ElasticSearchConnection con = new ElasticSearchConnection("myId");
-            con.setPort(9200);
-            con.setUser("elastic");
-            con.setPassword("root1234");
-            con.setHost("elasticsearch");
-            con.setOptions("{useXPackSecurity: true}");
+            connection = new ElasticsearchConnection("myId");
+            connection.setPort(9200);
+            connection.setUser("elastic");
+            connection.setPassword("root1234");
+            connection.setHost("elasticsearch");
+            connection.setUseXPackSecurity(true);
+            connection.setUseEncryption(true);
+            //connection.setAdditionalHostAddresses();
 
-            elasticsearchConnectionRegistry.registerAsService(con);
         }
+    }
+
+    public ElasticsearchConnection getConnection() {
+        return connection;
+    }
+
+    private static Map<String, String> getMap(Dictionary<String, ?> d) {
+        Map<String, String> m = new HashMap<>();
+        if (d != null) {
+            Enumeration<String> en = d.keys();
+            while (en.hasMoreElements()) {
+                String key = en.nextElement();
+                if (!key.startsWith("felix.") && !key.startsWith("service.")) {
+                    m.put(key, d.get(key).toString());
+                }
+            }
+        }
+        return m;
     }
 }

@@ -12,10 +12,10 @@ import java.io.IOException;
  * Wrapper for Elasticsearch High Level Rest Client
  */
 public interface ElasticsearchClientWrapper {
-    ElasticsearchClient getClient();
-    Rest5Client getRest5Client();
-    String performRequest(GetRequest request) throws IOException;
-    String performRequest(Request request) throws IOException, ParseException;
+    ElasticsearchClient getClient() throws ConnectionUnavailableException;
+    Rest5Client getRest5Client() throws ConnectionUnavailableException;
+    String performRequest(GetRequest request) throws IOException, ConnectionUnavailableException;
+    String performRequest(Request request) throws IOException, ParseException, ConnectionUnavailableException;
 
     /**
      *
