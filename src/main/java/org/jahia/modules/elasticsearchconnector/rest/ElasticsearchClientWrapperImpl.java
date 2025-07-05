@@ -24,9 +24,7 @@ import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.ssl.TrustStrategy;
 import org.jahia.modules.elasticsearchconnector.config.ElasticsearchConfig;
 import org.jahia.settings.SettingsBean;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +42,7 @@ import java.util.stream.Collectors;
 /**
  * Implementation of Elasticsearch client
  */
-@Component(service = ElasticsearchClientWrapper.class, immediate = true, property = {"databaseType=ELASTICSEARCH", "databaseId=myId"})
+@Component(service = ElasticsearchClientWrapper.class, immediate = true, property = {"databaseType=ELASTICSEARCH", "databaseId=myId"}, scope = ServiceScope.SINGLETON)
 public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrapper {
 
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchClientWrapperImpl.class);
@@ -55,23 +53,14 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
     private ElasticsearchConnection connection;
     private Sniffer sniffer;
 
+    @Activate
+    public void activate() {
+        logger.info("ElasticsearchClientWrapper activated");
+    }
+
     @Deactivate
     public void deactivate() {
-        connection = null;
-
-        if (sniffer != null) {
-            sniffer.close();
-            sniffer = null;
-        }
-
-        if (client != null) {
-            try {
-                client.close();
-                client = null;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        closeClients();
     }
 
     @Reference
@@ -79,16 +68,20 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
         this.elasticsearchConfig = elasticsearchConfig;
     }
 
-    // TODO: is it possible to have issues with this in if multiple threads compete for the client?
     @Override
     public ElasticsearchClient getClient() throws ConnectionUnavailableException {
-        resolveConnection();
+        synchronized (this) {
+            resolveConnection();
+        }
+
         return client;
     }
 
     @Override
     public Rest5Client getRest5Client() throws ConnectionUnavailableException {
-        resolveConnection();
+        synchronized (this) {
+            resolveConnection();
+        }
         return rest5Client;
     }
 
@@ -112,8 +105,13 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
         return SettingsBean.getInstance().getPropertyValue("elasticsearch.prefix");
     }
 
-    // TODO handle res5 lowlevel client
-    private ElasticsearchClient resolveClient(boolean snifferToBeAdded) {
+    @Override
+    public ElasticsearchConnection getConnection() {
+        return connection;
+    }
+
+    private ElasticsearchClients resolveClient(boolean snifferToBeAdded) {
+        // TODO use connections properties properly
         List<HttpHost> addresses = new ArrayList<>();
         int snifferInterval = 5000;
         boolean useSSL = false;
@@ -157,8 +155,7 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
             sniffOnFailureListener.setSniffer(sniffer);
         }
 
-        //this.rest5Client = restClient;
-        return esClient;
+        return new ElasticsearchClients(esClient, restClient);
     }
 
     private void handleSecurityConfiguration(Rest5ClientBuilder restClientBuilder, ElasticsearchConnection connection) {
@@ -198,30 +195,83 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
         ElasticsearchConnection con = elasticsearchConfig.getConnection();
 
         if (connection == null || !connection.equals(con) || this.client == null) {
+            // Clean up may be necessary if previous client exists but connection changed
+            closeClients();
             connection = con;
-            this.client = resolveClient(false);
+            ElasticsearchClients clients = resolveClient(true);
 
-            ElasticsearchClient c = resolveClient(false);
+            ElasticsearchClients testClients = resolveClient(false);
 
             try {
-                if (!c.ping().value()) {
+                if (!testClients.getElasticsearchClient().ping().value()) {
                     throw new ConnectionUnavailableException("Could not establish connection with Elasticsearch");
                 }
+
+                this.client = clients.getElasticsearchClient();
+                this.rest5Client = clients.getRest5Client();
             } catch (ConnectException e) {
                 logger.warn("Failed to create/ping connection due to: {}", e.getMessage());
-                // TODO close client
+                closeClients();
                 throw new ConnectionUnavailableException("Could not establish connection with Elasticsearch: " + e.getMessage());
             } catch (IOException | ElasticsearchException e) {
                 logger.error("Failed to create/ping connection due to: {}", e.getMessage(), e);
-                // TODO close client
+                closeClients();
                 throw new ConnectionUnavailableException("Could not establish connection with Elasticsearch: " + e.getMessage());
             } finally {
                 try {
-                    c.close();
+                    // Closing upper level client closes lower level one
+                    testClients.getElasticsearchClient().close();
                 } catch (IOException e) {
                     logger.error(e.getMessage(), e);
                 }
             }
+        }
+    }
+
+    public void closeClients() {
+        logger.info("Closing the client");
+
+        connection = null;
+
+        if (sniffer != null) {
+            sniffer.close();
+            sniffer = null;
+        }
+
+        if (client != null) {
+            try {
+                // Closing upper level should close lower level one
+                client.close();
+                client = null;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private static class ElasticsearchClients {
+        private ElasticsearchClient elasticsearchClient;
+        private Rest5Client rest5Client;
+
+        public ElasticsearchClients(ElasticsearchClient elasticsearchClient, Rest5Client rest5Client) {
+            this.elasticsearchClient = elasticsearchClient;
+            this.rest5Client = rest5Client;
+        }
+
+        public ElasticsearchClient getElasticsearchClient() {
+            return elasticsearchClient;
+        }
+
+        public void setElasticsearchClient(ElasticsearchClient elasticsearchClient) {
+            this.elasticsearchClient = elasticsearchClient;
+        }
+
+        public Rest5Client getRest5Client() {
+            return rest5Client;
+        }
+
+        public void setRest5Client(Rest5Client rest5Client) {
+            this.rest5Client = rest5Client;
         }
     }
 }

@@ -16,6 +16,7 @@ public interface ElasticsearchClientWrapper {
     Rest5Client getRest5Client() throws ConnectionUnavailableException;
     String performRequest(GetRequest request) throws IOException, ConnectionUnavailableException;
     String performRequest(Request request) throws IOException, ParseException, ConnectionUnavailableException;
+    ElasticsearchConnection getConnection();
 
     /**
      *
