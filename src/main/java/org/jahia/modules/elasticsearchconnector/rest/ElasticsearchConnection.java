@@ -20,7 +20,6 @@ public class ElasticsearchConnection {
     protected String id;
     protected String host;
     protected Integer port;
-    protected String uri;
     protected String user;
     protected String password;
     protected String snifferInterval;
@@ -54,14 +53,6 @@ public class ElasticsearchConnection {
 
     public void setPort(Integer port) {
         this.port = port;
-    }
-
-    public String getUri() {
-        return this.uri;
-    }
-
-    public void setUri(String uri) {
-        this.uri = uri;
     }
 
     public String getUser() {
@@ -121,11 +112,11 @@ public class ElasticsearchConnection {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ElasticsearchConnection that = (ElasticsearchConnection) o;
-        return useXPackSecurity == that.useXPackSecurity && useEncryption == that.useEncryption && Objects.equals(id, that.id) && Objects.equals(host, that.host) && Objects.equals(port, that.port) && Objects.equals(uri, that.uri) && Objects.equals(user, that.user) && Objects.equals(password, that.password) && Objects.equals(additionalHostAddresses, that.additionalHostAddresses);
+        return useXPackSecurity == that.useXPackSecurity && useEncryption == that.useEncryption && Objects.equals(id, that.id) && Objects.equals(host, that.host) && Objects.equals(port, that.port) && Objects.equals(user, that.user) && Objects.equals(password, that.password) && Objects.equals(additionalHostAddresses, that.additionalHostAddresses);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, host, port, uri, user, password, useXPackSecurity, useEncryption, additionalHostAddresses);
+        return Objects.hash(id, host, port, user, password, useXPackSecurity, useEncryption, additionalHostAddresses);
     }
 }
