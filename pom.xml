@@ -250,9 +250,6 @@
                     <instructions>
                         <_invalidfilenames>CON(\..+)?|PRN(\..+)?|AUX(\..+)?|NUL(\..+)?|COM[1-9](\..+)?|LPT[1-9](\..+)?|\$Mft|\$MftMirr|\$LogFile|\$Volume|\$AttrDef|\$Bitmap|\$Boot|\$BadClus|\$Secure|\$Upcase|\$Extend|\$Quota|\$ObjId|\$Reparse</_invalidfilenames>
                         <_dsannotations>*</_dsannotations>
-                        <Jahia-Module-Priority>3</Jahia-Module-Priority>
-                        <JAX-RS-Alias>/dbconn/elasticsearch</JAX-RS-Alias>
-                        <JAX-RS-Application>org.jahia.modules.elasticsearchconnector.api.ECApiApplication</JAX-RS-Application>
                         <Import-Package>
                             com.unboundid.util;resolution:=optional,
                             !org.elasticsearch.xpack.*,
