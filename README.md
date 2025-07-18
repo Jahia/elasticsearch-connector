@@ -29,7 +29,5 @@ You can set up a connection by modifying [org.jahia.modules.elasticsearch_config
 
 3. Use `ElasticsearchClient` via `getClient()` or low-level rest client via `getRest5Client()` APIs available on the client wrapper.
 
-
- 
- 
-
+As of 4.0.0 you can only have one connection, and it can only be configured via the `.cfg` file mentioned above. There is no UI. 
+Connection will be created/updated on demand once any of the `ElasticsearchClientWrapper` API is used.
