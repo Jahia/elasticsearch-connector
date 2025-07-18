@@ -14,7 +14,7 @@ import co.elastic.clients.transport.rest5_client.low_level.sniffer.Elasticsearch
 import co.elastic.clients.transport.rest5_client.low_level.sniffer.SniffOnFailureListener;
 import co.elastic.clients.transport.rest5_client.low_level.sniffer.Sniffer;
 import org.apache.commons.lang.StringUtils;
-import org.apache.hc.client5.http.ssl.TrustSelfSignedStrategy;
+import org.apache.hc.client5.http.ssl.TrustAllStrategy;
 import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.ParseException;
@@ -201,19 +201,25 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
     private void handleSecurityConfiguration(Rest5ClientBuilder restClientBuilder, ElasticsearchConnection connection) {
         try {
             //Handle SSL
-            // TODO looks like this might have been replaced by SSLConnectionSocketFactory in http5? Is it still necessary?
-            //final SSLIOSessionStrategy sslioSessionStrategy;
+            /*
+                TODO: Make sure current ssl set up works. From the looks of it and AI it looks adequate but needs to be tested.
+                There is a separate story for that https://github.com/Jahia/elasticsearch-connector/issues/71,
+                it needs to be tested and this comment should ne removed.
+
+                AI:
+                No, there's no need to configure a socket factory when using the default JVM truststore. When you use SSLContexts.custom().loadTrustMaterial() without parameters, it automatically:
+                Uses the default JVM truststore (cacerts)
+                Uses the default SSL socket factory
+                Applies standard certificate validation
+                Your current code for production use is already correct:
+             */
             final SSLContext sslContext;
             if (SettingsBean.getInstance().isDevelopmentMode()) {
                 //When in development trust own CA and all self-signed certs
-                sslContext = SSLContexts.custom().loadTrustMaterial(null, new TrustSelfSignedStrategy()).build();
-                //Turn off hostname verification in development mode. Default SSL protocol and cipher suites are used.
-                //sslioSessionStrategy = new SSLIOSessionStrategy(sslContext, NoopHostnameVerifier.INSTANCE);
+                sslContext = SSLContexts.custom().loadTrustMaterial(null, new TrustAllStrategy()).build();
             } else {
                 //Use default jvm truststore
                 sslContext = SSLContexts.custom().loadTrustMaterial((TrustStrategy) null).build();
-                //Use default SSL protocol, cipher suites and host name verification
-                //sslioSessionStrategy = new SSLIOSessionStrategy(sslContext);
             }
             //Set credentials for connection
             String cred = Base64.getEncoder().encodeToString((connection.user + ":" + connection.password).getBytes());
@@ -221,11 +227,6 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
                     new BasicHeader("Authorization", "Basic " + cred)
             });
             restClientBuilder.setSSLContext(sslContext);
-//            restClientBuilder.setHttpClientConfigCallback(httpAsyncClientBuilder -> httpAsyncClientBuilder
-//                    .setSSLContext(sslContext)
-//                    .setSSLStrategy(sslioSessionStrategy)
-//                    .setDefaultCredentialsProvider(credentialsProvider)
-//            );
         } catch (GeneralSecurityException ex) {
             logger.error("Failed to configure SSL context when configuring ES Rest Client", ex);
         }
@@ -239,8 +240,11 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
 
         // Skip if connection is already established and hasn't changed
         if (isConnectionValid(newConnection)) {
+            logger.debug("Connection and client exist and have not changed, will use existing connection and client.");
             return;
         }
+
+        logger.debug("Creating new client");
 
         // Clean up existing resources
         closeClients();
@@ -321,12 +325,14 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
             }
         }
 
-        // Clear connection last
         connection = null;
 
         logger.debug("Client cleanup completed successfully");
     }
 
+    /**
+     * Helper class to organize clients
+     */
     private static class ElasticsearchClients {
         private ElasticsearchClient elasticsearchClient;
         private Rest5Client rest5Client;
