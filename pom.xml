@@ -203,8 +203,8 @@
                             org.apache.lucene.search.join.*,
                             org.apache.lucene.search.*,
                             org.apache.lucene.util.*,
-                            org.jahia.modules.elasticsearchconnector.rest,
-                            org.jahia.modules.elasticsearchconnector.connection
+                            org.jahia.modules.elasticsearchconnector,
+                            org.jahia.modules.elasticsearchconnector.rest
                         </Export-Package>
                     </instructions>
                 </configuration>
