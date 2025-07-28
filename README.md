@@ -7,7 +7,11 @@
 
 # Elasticsearch connector
 
-Note that as of version 4.0.0 `database-connector` is no longer necessary to establish connection to `Elasticsearch`. 
+This connector is intended for use with database connector.
+
+## Jahia Cloud
+
+IMPORTANT: The REST API exposed by this module is used by the cloud team, its methods MUST NOT be modified without prior consultation with the Jahia Cloud team as it might have impacts on their implementation
 
 ## Usage 
 
@@ -19,15 +23,19 @@ to your elasticsearch.yml.
 
 #### Setting up a connection
 
-You can set up a connection by modifying [org.jahia.modules.elasticsearch_config.cfg](src%2Fmain%2Fresources%2FMETA-INF%2Fconfigurations%2Forg.jahia.modules.elasticsearch_config.cfg) file. 
+You can set up a connection by going to Administration -> Configuration -> Database connector. Click on "plus" button and 
+fill out the form. Please note that while this connector is in development stage you may find UI buggy and after 
+adding connection you can see two displayed in this case simply refresh the page.
 
 #### Using connection
 
-1. To use connection in a module add a dependency on `elasticsearch-connector`.
+1. To use connection in a module add a dependency on database-connector and elasticsearch-connector.
 
-2. Import `ElasticsearchClientWrapper` service. You can do so by using `@Reference` annotation, using a service tracker or `BundleUtils.getOSGIService()`.
+2. Import elasticsearch connector registry <osgi:reference id="esRegistry" interface="org.jahia.modules.elasticsearchconnector.connection.ElasticSearchConnectionRegistry" />
 
-3. Use `ElasticsearchClient` via `getClient()` or low-level rest client via `getRest5Client()` APIs available on the client wrapper.
+3. Use registry to get your connection (ElasticSearchTransportClient) esRegistry.getConnectionService(ElasticSearchConnection.DATABASE_TYPE, "yourConnectionName")
 
-As of 4.0.0 you can only have one connection, and it can only be configured via the `.cfg` file mentioned above. There is no UI. 
-Connection will be created/updated on demand once any of the `ElasticsearchClientWrapper` API is used.
+
+ 
+ 
+
