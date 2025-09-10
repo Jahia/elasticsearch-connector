@@ -29,13 +29,13 @@
     <parent>
         <artifactId>jahia-modules</artifactId>
         <groupId>org.jahia.modules</groupId>
-        <version>8.1.6.0</version>
+        <version>8.2.0.0</version>
     </parent>
     <artifactId>elasticsearch-connector</artifactId>
     <name>Elastic Search Connector</name>
-    <version>3.5.0-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
-    <description>This is the custom module (ElasticSearch Connector) for running on a Digital Experience Manager server.</description>
+    <description>This is a custom module (ElasticSearch Connector) for running on a Jahia.</description>
 
     <scm>
         <connection>scm:git:git@github.com:Jahia/elasticsearch-connector.git</connection>
@@ -46,15 +46,11 @@
 
     <properties>
         <jahia-module-type>system</jahia-module-type>
-        <jahia-depends>database-connector</jahia-depends>
-        <jahia-module-signature>MC0CFQCU/iFyFw7WoDQVN8TMRu42qeC+kAIUafoSiWV/XOGUuzQMiRcMbIdFzNk=</jahia-module-signature>
-        <javaxws-annotations.version>1.1.1</javaxws-annotations.version>
-        <jersey.version>2.18</jersey.version>
-        <elasticsearch.version>7.13.2</elasticsearch.version>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <maven.compiler.source>1.8</maven.compiler.source>
+        <jahia-module-signature>MCwCFAMVz0MVJ6/3yxkZ4VOaADW9OOyiAhQxa+BID5cohO4ADLocbhkL92FCjA==</jahia-module-signature>
+        <elasticsearch.version>9.0.3</elasticsearch.version>
+        <elasticsearch.deprecated.version>7.13.2</elasticsearch.deprecated.version>
         <jahia.nexus.staging.repository.id>40c27f27a86d2d</jahia.nexus.staging.repository.id>
-        <jahia.plugin.version>6.9</jahia.plugin.version>
+        <jahia.plugin.version>6.13</jahia.plugin.version>
     </properties>
     <repositories>
         <repository>
@@ -112,7 +108,7 @@
         <dependency>
             <groupId>org.jahia.server</groupId>
             <artifactId>jahia-impl</artifactId>
-            <version>8.1.6.1</version>
+            <version>8.2.0.0</version>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>
@@ -122,21 +118,9 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>20231013</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
             <version>2.6</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.jcr</groupId>
-            <artifactId>jcr</artifactId>
-            <version>2.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -145,162 +129,32 @@
             <version>${osgi.version}</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.12.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.gemini.blueprint</groupId>
-            <artifactId>gemini-blueprint-core</artifactId>
-            <version>${gemini.blueprint.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jahia.modules</groupId>
-            <artifactId>database-connector</artifactId>
-            <version>1.2.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.bundles</groupId>
-            <artifactId>jaxrs-ri</artifactId>
-            <version>${jersey.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.media</groupId>
-            <artifactId>jersey-media-multipart</artifactId>
-            <version>${jersey.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>${jackson.osgi.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.osgi.version}</version>
-            <scope>provided</scope>
-        </dependency>
+        <!-- **START** ELASTIC SEARCH DEPENDENCIES -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson-databind.osgi.version}</version>
-            <scope>provided</scope>
+            <version>2.17.0</version>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.jaxrs</groupId>
-            <artifactId>jackson-jaxrs-base</artifactId>
-            <version>${jackson.osgi.version}</version>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+            <version>5.5</version>
         </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.jaxrs</groupId>
-            <artifactId>jackson-jaxrs-json-provider</artifactId>
-            <version>${jackson.osgi.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jdk8</artifactId>
-            <version>${jackson.osgi.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-yaml</artifactId>
-            <version>${jackson.osgi.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-jaxb-annotations</artifactId>
-            <version>${jackson.osgi.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.fileinstall</artifactId>
-            <version>${felix.fileinstall.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.http.api</artifactId>
-            <version>${felix.http.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.http.base</artifactId>
-            <version>${felix.http.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- **START** ELASTIC SEARCH DEPENDENCIES -->
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>${log4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-            <version>${log4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-to-slf4j</artifactId>
-            <version>${log4j.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-core</artifactId>
-            <version>8.10.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-highlighter</artifactId>
-            <version>8.10.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.lucene</groupId>
-                    <artifactId>lucene-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.lucene</groupId>
-                    <artifactId>lucene-memory</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.lucene</groupId>
-                    <artifactId>lucene-queries</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.13</version>
-        </dependency>
-        <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-            <version>2.10.10</version>
-        </dependency>
-        <dependency>
-            <groupId>com.carrotsearch</groupId>
-            <artifactId>hppc</artifactId>
-            <version>0.8.1</version>
-        </dependency>
+<!--        TODO elasticsearch-rest-client-sniffer and elasticsearch-rest-high-level-client need to be removed-->
+<!--        here only to make it work with AS before AS loses these references-->
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-client-sniffer</artifactId>
-            <version>${elasticsearch.version}</version>
+            <version>${elasticsearch.deprecated.version}</version>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
+            <version>${elasticsearch.deprecated.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
             <version>${elasticsearch.version}</version>
         </dependency>
 
@@ -324,22 +178,13 @@
                     <instructions>
                         <_invalidfilenames>CON(\..+)?|PRN(\..+)?|AUX(\..+)?|NUL(\..+)?|COM[1-9](\..+)?|LPT[1-9](\..+)?|\$Mft|\$MftMirr|\$LogFile|\$Volume|\$AttrDef|\$Bitmap|\$Boot|\$BadClus|\$Secure|\$Upcase|\$Extend|\$Quota|\$ObjId|\$Reparse</_invalidfilenames>
                         <_dsannotations>*</_dsannotations>
-                        <Jahia-Module-Priority>3</Jahia-Module-Priority>
-                        <JAX-RS-Alias>/dbconn/elasticsearch</JAX-RS-Alias>
-                        <JAX-RS-Application>org.jahia.modules.elasticsearchconnector.api.ECApiApplication</JAX-RS-Application>
                         <Import-Package>
                             com.unboundid.util;resolution:=optional,
                             !org.elasticsearch.xpack.*,
                             !org.elasticsearch.xpack.client.*,
                             org.elasticsearch;resolution:=optional,
+                            co.elastic;resolution:=optional,
                             org.elasticsearch.*;resolution:=optional,
-                            org.jahia.modules.databaseConnector.api.filters,
-                            org.jahia.modules.databaseConnector.services,
-                            org.jahia.modules.databaseConnector.connection,
-                            org.jahia.modules.databaseConnector.util,
-                            org.jahia.modules.databaseConnector.connector,
-                            org.jahia.modules.databaseConnector.taglib,
-                            org.jahia.modules.databaseConnector,
                             org.json;version="[20070829, 20231014)",
                             ${jahia.plugin.projectPackageImport},
                             *
@@ -349,12 +194,18 @@
                             !org.elasticsearch.core.internal.*,
                             org.elasticsearch,
                             org.elasticsearch.*,
+                            co.elastic,
+                            co.elastic.clients.elasticsearch.*,
+                            co.elastic.clients.transport.*,
+                            co.elastic.clients.transport.rest_client.*,
+                            co.elastic.clients.json.*,
+                            co.elastic.clients.util.*,
                             com.carrotsearch.hppc.*,
                             org.apache.lucene.search.join.*,
                             org.apache.lucene.search.*,
                             org.apache.lucene.util.*,
-                            org.jahia.modules.elasticsearchconnector.rest,
-                            org.jahia.modules.elasticsearchconnector.connection
+                            org.jahia.modules.elasticsearchconnector,
+                            org.jahia.modules.elasticsearchconnector.rest
                         </Export-Package>
                     </instructions>
                 </configuration>
