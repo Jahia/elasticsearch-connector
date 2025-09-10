@@ -47,9 +47,10 @@
     <properties>
         <jahia-module-type>system</jahia-module-type>
         <jahia-module-signature>MCwCFAMVz0MVJ6/3yxkZ4VOaADW9OOyiAhQxa+BID5cohO4ADLocbhkL92FCjA==</jahia-module-signature>
-        <elasticsearch.version>7.13.2</elasticsearch.version>
+        <elasticsearch.version>9.0.3</elasticsearch.version>
+        <elasticsearch.deprecated.version>7.13.2</elasticsearch.deprecated.version>
         <jahia.nexus.staging.repository.id>40c27f27a86d2d</jahia.nexus.staging.repository.id>
-        <jahia.plugin.version>6.9</jahia.plugin.version>
+        <jahia.plugin.version>6.13</jahia.plugin.version>
     </properties>
     <repositories>
         <repository>
@@ -144,17 +145,17 @@
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-client-sniffer</artifactId>
-            <version>${elasticsearch.version}</version>
+            <version>${elasticsearch.deprecated.version}</version>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>${elasticsearch.version}</version>
+            <version>${elasticsearch.deprecated.version}</version>
         </dependency>
         <dependency>
             <groupId>co.elastic.clients</groupId>
             <artifactId>elasticsearch-java</artifactId>
-            <version>9.0.3</version>
+            <version>${elasticsearch.version}</version>
         </dependency>
 
         <!-- **END** ELASTIC SEARCH DEPENDENCIES -->
