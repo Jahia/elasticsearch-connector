@@ -1,7 +1,12 @@
 package org.jahia.modules.elasticsearchconnector.rest;
 
+import org.apache.commons.lang3.StringUtils;
+import org.jahia.utils.EncryptionUtils;
+
 import java.util.List;
 import java.util.Objects;
+
+import static org.jahia.modules.elasticsearchconnector.ESConstants.*;
 
 /**
  * Represents an Elasticsearch connection configuration.
@@ -17,15 +22,19 @@ import java.util.Objects;
  */
 public class ElasticsearchConnection {
 
-    protected String id;
-    protected String host;
-    protected Integer port;
-    protected String user;
-    protected String password;
-    protected String snifferInterval;
-    protected boolean useXPackSecurity;
-    protected boolean useEncryption;
-    protected List<String> additionalHostAddresses;
+    private String id;
+    private String host;
+    private Integer port;
+    private String user;
+    private String password;
+    private String snifferInterval;
+    private boolean useXPackSecurity;
+    private boolean useEncryption;
+    private List<String> additionalHostAddresses;
+
+    public ElasticsearchConnection() {
+        this.id = DB_ID;
+    }
 
     public ElasticsearchConnection(String id) {
         this.id = id;
@@ -39,48 +48,61 @@ public class ElasticsearchConnection {
         this.id = id;
     }
 
+    public void setHost(String host) {
+        this.host = (host == null || host.trim().isEmpty()) ? DEFAULT_HOST : host;
+    }
+
     public String getHost() {
         return this.host;
     }
 
-    public void setHost(String host) {
-        this.host = host;
+    public void setPort(Integer port) {
+        this.port = (port == null) ? DEFAULT_PORT : port;
     }
 
     public Integer getPort() {
         return this.port;
     }
 
-    public void setPort(Integer port) {
-        this.port = port;
+    public void setUser(String user) {
+        this.user = (user == null || user.trim().isEmpty()) ? DEFAULT_USER : user;
     }
 
     public String getUser() {
         return this.user;
     }
 
-    public void setUser(String user) {
-        this.user = user;
-    }
-
     public String getPassword() {
         return this.password;
+    }
+
+    public char[] decodePassword() {
+        return EncryptionUtils.passwordBaseDecrypt(this.password).toCharArray();
     }
 
     public void setPassword(String password) {
         this.password = password;
     }
 
-    public String getSnifferInterval() {
-        return snifferInterval;
+    public boolean hasCredentials() {
+        return StringUtils.isNotEmpty(this.user) && StringUtils.isNotEmpty(this.password);
     }
 
     public void setSnifferInterval(String snifferInterval) {
-        this.snifferInterval = snifferInterval;
+        this.snifferInterval = (snifferInterval == null || snifferInterval.trim().isEmpty()) ? DEFAULT_SNIFFER_INTERVAL : snifferInterval;
+    }
+
+    public String getSnifferInterval() {
+        return this.snifferInterval;
+    }
+
+    public int getSnifferIntervalMillis() {
+        String interval = getSnifferInterval();
+        return (interval != null) ? Integer.parseInt(interval.replaceAll("[^0-9]", "")) * 1000 : -1;
     }
 
     public boolean isUseXPackSecurity() {
-        return useXPackSecurity;
+        return this.useXPackSecurity;
     }
 
     public void setUseXPackSecurity(boolean useXPackSecurity) {
@@ -88,7 +110,15 @@ public class ElasticsearchConnection {
     }
 
     public boolean isUseEncryption() {
-        return useEncryption;
+        return this.useEncryption;
+    }
+
+    public String getProtocolScheme() {
+        return isUseEncryption() ? "https" : "http";
+    }
+
+    public boolean isHttp() {
+        return "http".equalsIgnoreCase(getProtocolScheme());
     }
 
     public void setUseEncryption(boolean useEncryption) {
@@ -96,7 +126,7 @@ public class ElasticsearchConnection {
     }
 
     public List<String> getAdditionalHostAddresses() {
-        return additionalHostAddresses;
+        return this.additionalHostAddresses;
     }
 
     public void setAdditionalHostAddresses(List<String> additionalHostAddresses) {
@@ -112,7 +142,14 @@ public class ElasticsearchConnection {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ElasticsearchConnection that = (ElasticsearchConnection) o;
-        return useXPackSecurity == that.useXPackSecurity && useEncryption == that.useEncryption && Objects.equals(id, that.id) && Objects.equals(host, that.host) && Objects.equals(port, that.port) && Objects.equals(user, that.user) && Objects.equals(password, that.password) && Objects.equals(additionalHostAddresses, that.additionalHostAddresses);
+        return useXPackSecurity == that.useXPackSecurity
+                && useEncryption == that.isUseEncryption()
+                && Objects.equals(id, that.getId())
+                && Objects.equals(host, that.getHost())
+                && Objects.equals(port, that.getPort())
+                && Objects.equals(user, that.getUser())
+                && Objects.equals(password, that.getPassword())
+                && Objects.equals(additionalHostAddresses, that.getAdditionalHostAddresses());
     }
 
     @Override
