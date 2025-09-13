@@ -50,16 +50,15 @@ public interface ElasticsearchClientWrapper {
     String performRequest(Request request) throws IOException, ParseException, ConnectionUnavailableException;
 
     /**
-     * Returns the current Elasticsearch connection configuration.
-     *
-     * @return The current ElasticsearchConnection instance
-     */
-    ElasticsearchConnection getConnection();
-
-    /**
      *  Returns prefix for index names
      *
      * @return the content of the property elasticsearch.prefix, null if not available/defined
      */
     String getEnvironmentPrefix();
+
+    /**
+     * Resolves connection configuration if needed, and sends a test ping to the elasticsearch connection
+     * @return true if ping request has been sent successfully; false otherwise
+     */
+    boolean testConnection();
 }

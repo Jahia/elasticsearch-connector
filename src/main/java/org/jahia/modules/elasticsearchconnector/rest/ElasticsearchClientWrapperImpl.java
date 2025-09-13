@@ -3,9 +3,6 @@ package org.jahia.modules.elasticsearchconnector.rest;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch.core.GetRequest;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
 import co.elastic.clients.transport.rest5_client.low_level.Request;
 import co.elastic.clients.transport.rest5_client.low_level.Response;
 import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
@@ -13,13 +10,12 @@ import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
 import co.elastic.clients.transport.rest5_client.low_level.sniffer.ElasticsearchNodesSniffer;
 import co.elastic.clients.transport.rest5_client.low_level.sniffer.SniffOnFailureListener;
 import co.elastic.clients.transport.rest5_client.low_level.sniffer.Sniffer;
-import org.apache.commons.lang.StringUtils;
+import org.apache.hc.client5.http.auth.CredentialsProvider;
 import org.apache.hc.client5.http.ssl.TrustAllStrategy;
-import org.apache.hc.core5.http.Header;
-import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.ParseException;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
-import org.apache.hc.core5.http.message.BasicHeader;
+import org.apache.hc.core5.http.nio.ssl.TlsStrategy;
+import org.apache.hc.core5.reactor.IOReactorConfig;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.ssl.TrustStrategy;
 import org.jahia.modules.elasticsearchconnector.ESConstants;
@@ -33,12 +29,8 @@ import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Implementation of the ElasticsearchClientWrapper interface that manages connections to Elasticsearch.
@@ -71,12 +63,12 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
     private ElasticsearchClient client;
     private Rest5Client rest5Client;
     private ElasticsearchConfig elasticsearchConfig;
-    private ElasticsearchConnection connection;
+    private ElasticsearchConnection connectionConfig;
     private Sniffer sniffer;
 
     @Activate
     public void activate() {
-        logger.info("ElasticsearchClientWrapper activated");
+        logger.info("ElasticsearchClientWrapper service activated");
     }
 
     @Deactivate
@@ -121,71 +113,68 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
         return SettingsBean.getInstance().getPropertyValue("elasticsearch.prefix");
     }
 
-    @Override
-    public ElasticsearchConnection getConnection() {
-        return connection;
+    private ElasticsearchClients resolveClient() throws ConnectionUnavailableException {
+        return resolveClient(false);
     }
 
-    private ElasticsearchClients resolveClient(boolean snifferToBeAdded) {
-        List<HttpHost> addresses = new ArrayList<>();
-        String protocolScheme = connection.isUseEncryption() ? "https" : "http";
+    /**
+     * Initialize client connections
+     * <p>
+     * <b>Precondition:</b> {@code connectionConfig} must be initialized. Call {@link #resolveConnectionConfig()} if needed.
+     * </p>
+     * @param isTestClient flag if client is a test client - skips sniffer configurations
+     * @throws ConnectionUnavailableException
+     */
+    private ElasticsearchClients resolveClient(boolean isTestClient) throws ConnectionUnavailableException {
+        logger.debug("Initializing elasticsearch clients...");
+        if (connectionConfig == null) {
+            throw new ConnectionUnavailableException("No Elasticsearch connection configured");
+        }
+        List<URI> addresses = ConnectionUtils.getAddresses(connectionConfig);
+        Rest5ClientBuilder builder = Rest5Client.builder(addresses);
 
-        // Add base address
-        addresses.add(new HttpHost(protocolScheme, connection.getHost(), connection.getPort()));
+        // Configure TCP/IP socket params for the connection
+        IOReactorConfig reactorConfig = ConnectionUtils.getTcpipConfig();
 
-        // Add additional hosts if available
-        if (connection.getAdditionalHostAddresses() != null) {
-            connection.getAdditionalHostAddresses().forEach(host -> {
-                String[] hostParts = host.split(":");
-                addresses.add(new HttpHost(protocolScheme, hostParts[0],
-                        hostParts.length > 1 ? Integer.parseInt(hostParts[1]) : connection.getPort()));
+        // Handle security if SSL or credentials are configured
+        if (connectionConfig.isUseEncryption() || connectionConfig.hasCredentials()) {
+            logger.debug("Initializing security configurations for elasticsearch connection");
+            handleSecurityConfiguration(builder, reactorConfig, connectionConfig);
+        } else if (!isTestClient) {
+            logger.debug("Initializing TCP/IP params for elasticsearch connection");
+            builder.setHttpClientConfigCallback(httpClientBuilder -> {
+                httpClientBuilder.setIOReactorConfig(reactorConfig);
             });
         }
 
-        Rest5ClientBuilder builder = Rest5Client.builder(addresses.stream()
-                .map(HttpHost::toURI)
-                .map(u -> {
-                    try {
-                        return new URI(u);
-                    } catch (URISyntaxException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .collect(Collectors.toList()));
-
-        // Handle security if SSL or credentials are configured
-        if (connection.isUseEncryption() || hasCredentials(connection)) {
-            handleSecurityConfiguration(builder, connection);
+        // Create default sniff failure listener before building client
+        SniffOnFailureListener sniffOnFailureListener = null;
+        if (!isTestClient && connectionConfig.getSnifferInterval() != null) {
+            logger.debug("Initializing Sniffer configurations");
+            sniffOnFailureListener = new SniffOnFailureListener();
+            builder.setFailureListener(sniffOnFailureListener);
         }
 
-        Rest5Client restClient = builder.build();
-        ElasticsearchTransport transport = new Rest5ClientTransport(restClient, new JacksonJsonpMapper());
-        ElasticsearchClient esClient = new ElasticsearchClient(transport);
+        ElasticsearchClients esClients = ElasticsearchClients.build(builder);
 
-        // Configure sniffer if needed
-        if (snifferToBeAdded && connection.getSnifferInterval() != null) {
-            configureSniffer(builder, restClient, protocolScheme, connection.getSnifferInterval());
+        // Configure the sniffer with the built client
+        if (!isTestClient) {
+            configureSniffer(esClients.getRest5Client(), sniffOnFailureListener, connectionConfig);
         }
 
-        return new ElasticsearchClients(esClient, restClient);
+        logger.debug("Elasticsearch clients initialized successfully");
+        return esClients;
     }
 
-    private boolean hasCredentials(ElasticsearchConnection connection) {
-        return StringUtils.isNotEmpty(connection.getUser()) &&
-                StringUtils.isNotEmpty(connection.getPassword());
-    }
-
-    private void configureSniffer(Rest5ClientBuilder builder, Rest5Client restClient,
-                                  String protocolScheme, String snifferInterval) {
-        SniffOnFailureListener sniffOnFailureListener = new SniffOnFailureListener();
-        builder.setFailureListener(sniffOnFailureListener);
-
-        ElasticsearchNodesSniffer.Scheme scheme = protocolScheme.equals("http") ?
+    private void configureSniffer(Rest5Client restClient, SniffOnFailureListener sniffOnFailureListener, ElasticsearchConnection connConfig) {
+        if (connConfig.getSnifferInterval() == null || sniffOnFailureListener == null) {
+            return;
+        }
+        ElasticsearchNodesSniffer.Scheme scheme = connConfig.isHttp() ?
                 ElasticsearchNodesSniffer.Scheme.HTTP :
                 ElasticsearchNodesSniffer.Scheme.HTTPS;
-
         ElasticsearchNodesSniffer nodesSniffer = new ElasticsearchNodesSniffer(restClient, 10000, scheme);
-        int intervalMillis = parseSnifferInterval(snifferInterval);
+        int intervalMillis = connConfig.getSnifferIntervalMillis();
 
         sniffer = Sniffer.builder(restClient)
                 .setSniffIntervalMillis(intervalMillis)
@@ -194,73 +183,55 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
         sniffOnFailureListener.setSniffer(sniffer);
     }
 
-    private int parseSnifferInterval(String interval) {
-        return Integer.parseInt(interval.replaceAll("[^0-9]", "")) * 1000;
-    }
-
-    private void handleSecurityConfiguration(Rest5ClientBuilder restClientBuilder, ElasticsearchConnection connection) {
+    private void handleSecurityConfiguration(Rest5ClientBuilder restClientBuilder,
+            IOReactorConfig reactorConfig, ElasticsearchConnection connection) {
         try {
-            //Handle SSL
-            /*
-                TODO: Make sure current ssl set up works. From the looks of it and AI it looks adequate but needs to be tested.
-                There is a separate story for that https://github.com/Jahia/elasticsearch-connector/issues/71,
-                it needs to be tested and this comment should ne removed.
-
-                AI:
-                No, there's no need to configure a socket factory when using the default JVM truststore. When you use SSLContexts.custom().loadTrustMaterial() without parameters, it automatically:
-                Uses the default JVM truststore (cacerts)
-                Uses the default SSL socket factory
-                Applies standard certificate validation
-                Your current code for production use is already correct:
-             */
             final SSLContext sslContext;
-            if (SettingsBean.getInstance().isDevelopmentMode()) {
-                //When in development trust own CA and all self-signed certs
-                sslContext = SSLContexts.custom().loadTrustMaterial(null, new TrustAllStrategy()).build();
-            } else {
-                //Use default jvm truststore
-                sslContext = SSLContexts.custom().loadTrustMaterial((TrustStrategy) null).build();
-            }
-            //Set credentials for connection
-            String cred = Base64.getEncoder().encodeToString((connection.user + ":" + connection.password).getBytes());
-            restClientBuilder.setDefaultHeaders(new Header[]{
-                    new BasicHeader("Authorization", "Basic " + cred)
-            });
+            boolean isDevMode = SettingsBean.getInstance().isDevelopmentMode();
+
+            // Create SSL context - open in dev mode, otherwise use default (null)
+            TrustStrategy sslTrustStrategy = isDevMode ? TrustAllStrategy.INSTANCE : null;
+            sslContext = SSLContexts.custom().loadTrustMaterial(sslTrustStrategy).build();
             restClientBuilder.setSSLContext(sslContext);
+
+            // Provide credentials, tcpip request config to client config callback
+            final CredentialsProvider credentialsProvider = ConnectionUtils.getCredentialsProvider(connection);
+            restClientBuilder.setHttpClientConfigCallback(httpClientBuilder -> {
+                httpClientBuilder
+                        .setDefaultCredentialsProvider(credentialsProvider)
+                        .setIOReactorConfig(reactorConfig);
+            });
+
+            // Disable hostname verification in dev mode
+            if (isDevMode) {
+                restClientBuilder.setConnectionManagerCallback(connManager -> {
+                    TlsStrategy noopHostnameStrategy = ConnectionUtils.getNoopHostnameStrategy(sslContext);
+                    connManager.setTlsStrategy(noopHostnameStrategy);
+                });
+            }
         } catch (GeneralSecurityException ex) {
             logger.error("Failed to configure SSL context when configuring ES Rest Client", ex);
         }
     }
 
+    /**
+     * - Resolve configuration
+     * - Test connection (resolve test connections, send a ping and close test clients)
+     * - If test connection succeeded, create and initialize clients
+     * @throws ConnectionUnavailableException
+     */
     private synchronized void resolveConnection() throws ConnectionUnavailableException {
-        ElasticsearchConnection newConnection = elasticsearchConfig.getConnection();
-        if (newConnection == null) {
-            throw new ConnectionUnavailableException("No Elasticsearch connection configuration available");
-        }
-
-        // Skip if connection is already established and hasn't changed
-        if (isConnectionValid(newConnection)) {
-            logger.debug("Connection and client exist and have not changed, will use existing connection and client.");
+        if (!resolveConnectionConfig()) {
+            // Connection config hasn't changed; do not recreate clients
             return;
         }
 
-        logger.debug("Creating new client");
-
-        // Clean up existing resources
-        closeClients();
-        connection = newConnection;
-
         try {
-            // Create test client first to verify connection
-            ElasticsearchClients testClients = createTestClients();
-            validateConnection(testClients.getElasticsearchClient());
-            cleanupTestClients(testClients);
-
+            doTestConnection();
             // Create actual clients with sniffer
-            ElasticsearchClients clients = resolveClient(true);
+            ElasticsearchClients clients = resolveClient();
             this.client = clients.getElasticsearchClient();
             this.rest5Client = clients.getRest5Client();
-
         } catch (ConnectException e) {
             handleConnectionFailure("Failed to establish connection", e);
         } catch (IOException | ElasticsearchException e) {
@@ -268,24 +239,64 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
         }
     }
 
-    private boolean isConnectionValid(ElasticsearchConnection newConnection) {
-        return connection != null
-                && connection.equals(newConnection)
-                && client != null;
-    }
-
-    private ElasticsearchClients createTestClients() {
-        return resolveClient(false);
-    }
-
-    private void validateConnection(ElasticsearchClient testClient)
-            throws IOException, ConnectionUnavailableException {
-        if (!testClient.ping().value()) {
-            throw new ConnectionUnavailableException("Elasticsearch cluster is not responding");
+    public boolean testConnection() {
+        logger.info("Testing connection...");
+        try {
+            resolveConnectionConfig();
+            doTestConnection();
+        } catch (ConnectionUnavailableException | IOException e) {
+            logger.error("Error validating test connection to elasticsearch", e);
+            return false;
+        } finally {
+            logger.info("Finished testing connection");
         }
+        return true;
     }
 
-    private void cleanupTestClients(ElasticsearchClients testClients) {
+    /**
+     * Initializes or resolves elasticsearch connection configuration
+     * @return true if connection config has changed and need to refresh/resolve elasticsearch connections; false otherwise
+     * @throws ConnectionUnavailableException if elasticsearch connection configuration is unavailable
+     */
+    private boolean resolveConnectionConfig() throws ConnectionUnavailableException {
+        logger.debug("Getting connection configuration...");
+        ElasticsearchConnection newConnConfig = elasticsearchConfig.getConnectionConfig();
+        if (newConnConfig == null) {
+            throw new ConnectionUnavailableException("No Elasticsearch connection configuration available");
+        }
+
+        // Skip if connection is already established and hasn't changed
+        boolean isValidConnectionConfig = connectionConfig != null
+                && connectionConfig.equals(newConnConfig)
+                && client != null;
+        if (isValidConnectionConfig) {
+            logger.debug("Connection and client exist and have not changed, will use existing connection and client.");
+            return false;
+        }
+
+        // Clean up existing resources
+        closeClients();
+        connectionConfig = newConnConfig;
+        logger.debug("Connection configuration initialized/updated successfully.");
+        return true;
+    }
+
+    /**
+     * Create test clients and test elasticsearch connections
+     * @precondition connectionConfig has been initialized; call resolveConnectionConfig() otherwise.
+     * @throws IOException
+     * @throws ConnectionUnavailableException
+     */
+    private void doTestConnection() throws IOException, ConnectionUnavailableException {
+        // Should we still init separate test client connection if real connections already exist?
+        ElasticsearchClients testClients = resolveClient(true);
+        logger.debug("Sending test ping elasticsearch connection...");
+        if (!testClients.getElasticsearchClient().ping().value()) {
+            throw new ConnectionUnavailableException("Elasticsearch cluster is not responding");
+        } else {
+            logger.debug("Elasticsearch test ping request sent successfully.");
+        }
+
         try {
             testClients.getElasticsearchClient().close();
         } catch (IOException e) {
@@ -325,37 +336,8 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
             }
         }
 
-        connection = null;
+        connectionConfig = null;
 
         logger.debug("Client cleanup completed successfully");
-    }
-
-    /**
-     * Helper class to organize clients
-     */
-    private static class ElasticsearchClients {
-        private ElasticsearchClient elasticsearchClient;
-        private Rest5Client rest5Client;
-
-        public ElasticsearchClients(ElasticsearchClient elasticsearchClient, Rest5Client rest5Client) {
-            this.elasticsearchClient = elasticsearchClient;
-            this.rest5Client = rest5Client;
-        }
-
-        public ElasticsearchClient getElasticsearchClient() {
-            return elasticsearchClient;
-        }
-
-        public void setElasticsearchClient(ElasticsearchClient elasticsearchClient) {
-            this.elasticsearchClient = elasticsearchClient;
-        }
-
-        public Rest5Client getRest5Client() {
-            return rest5Client;
-        }
-
-        public void setRest5Client(Rest5Client rest5Client) {
-            this.rest5Client = rest5Client;
-        }
     }
 }
