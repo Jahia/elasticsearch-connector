@@ -1,4 +1,4 @@
-package org.jahia.modules.elasticsearchconnector.rest;
+package org.jahia.modules.elasticsearchconnector.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
@@ -20,6 +20,7 @@ import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.ssl.TrustStrategy;
 import org.jahia.modules.elasticsearchconnector.ESConstants;
 import org.jahia.modules.elasticsearchconnector.config.ElasticsearchConfig;
+import org.jahia.modules.elasticsearchconnector.config.ElasticsearchConnectionConfig;
 import org.jahia.settings.SettingsBean;
 import org.osgi.service.component.annotations.*;
 import org.slf4j.Logger;
@@ -50,7 +51,7 @@ import java.util.List;
  *
  * @see ElasticsearchClientWrapper
  * @see ElasticsearchConfig
- * @see ElasticsearchConnection
+ * @see ElasticsearchConnectionConfig
  */
 @Component(service = ElasticsearchClientWrapper.class, immediate = true, property = {
         "databaseType=" + ESConstants.DB_TYPE,
@@ -63,7 +64,7 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
     private ElasticsearchClient client;
     private Rest5Client rest5Client;
     private ElasticsearchConfig elasticsearchConfig;
-    private ElasticsearchConnection connectionConfig;
+    private ElasticsearchConnectionConfig connectionConfig;
     private Sniffer sniffer;
 
     @Activate
@@ -166,7 +167,7 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
         return esClients;
     }
 
-    private void configureSniffer(Rest5Client restClient, SniffOnFailureListener sniffOnFailureListener, ElasticsearchConnection connConfig) {
+    private void configureSniffer(Rest5Client restClient, SniffOnFailureListener sniffOnFailureListener, ElasticsearchConnectionConfig connConfig) {
         if (connConfig.getSnifferInterval() == null || sniffOnFailureListener == null) {
             return;
         }
@@ -184,7 +185,7 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
     }
 
     private void handleSecurityConfiguration(Rest5ClientBuilder restClientBuilder,
-            IOReactorConfig reactorConfig, ElasticsearchConnection connection) {
+            IOReactorConfig reactorConfig, ElasticsearchConnectionConfig connConfig) {
         try {
             final SSLContext sslContext;
             boolean isDevMode = SettingsBean.getInstance().isDevelopmentMode();
@@ -195,7 +196,7 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
             restClientBuilder.setSSLContext(sslContext);
 
             // Provide credentials, tcpip request config to client config callback
-            final CredentialsProvider credentialsProvider = ConnectionUtils.getCredentialsProvider(connection);
+            final CredentialsProvider credentialsProvider = ConnectionUtils.getCredentialsProvider(connConfig);
             restClientBuilder.setHttpClientConfigCallback(httpClientBuilder -> {
                 httpClientBuilder
                         .setDefaultCredentialsProvider(credentialsProvider)
@@ -260,7 +261,7 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
      */
     private boolean resolveConnectionConfig() throws ConnectionUnavailableException {
         logger.debug("Getting connection configuration...");
-        ElasticsearchConnection newConnConfig = elasticsearchConfig.getConnectionConfig();
+        ElasticsearchConnectionConfig newConnConfig = elasticsearchConfig.getConnectionConfig();
         if (newConnConfig == null) {
             throw new ConnectionUnavailableException("No Elasticsearch connection configuration available");
         }

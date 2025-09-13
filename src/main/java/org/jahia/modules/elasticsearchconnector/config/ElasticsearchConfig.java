@@ -1,6 +1,5 @@
 package org.jahia.modules.elasticsearchconnector.config;
 
-import org.jahia.modules.elasticsearchconnector.rest.ElasticsearchConnection;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
@@ -25,7 +24,7 @@ import java.util.stream.Collectors;
 @Designate(ocd = ElasticsearchConfigMetatype.class)
 public class ElasticsearchConfig {
 
-    private final AtomicReference<ElasticsearchConnection> connection = new AtomicReference<>();
+    private final AtomicReference<ElasticsearchConnectionConfig> connectionConfig = new AtomicReference<>();
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -36,14 +35,14 @@ public class ElasticsearchConfig {
     @Deactivate
     protected void deactivate() {
         logger.info("Shutting down Elasticsearch connection...");
-        connection.set(null);
+        connectionConfig.set(null);
     }
 
     @Activate
     @Modified
     protected void activate(ElasticsearchConfigMetatype config) {
         logger.info("Activating/Updating elasticsearch configuration...");
-        ElasticsearchConnection connConfig = new ElasticsearchConnection();
+        ElasticsearchConnectionConfig connConfig = new ElasticsearchConnectionConfig();
         connConfig.setHost(config.elasticsearchConnector_host());
         connConfig.setPort(config.elasticsearchConnector_port());
         connConfig.setUser(config.elasticsearchConnector_user());
@@ -62,11 +61,11 @@ public class ElasticsearchConfig {
         } else {
             connConfig.setAdditionalHostAddresses(new ArrayList<>());
         }
-        connection.set(connConfig);
+        connectionConfig.set(connConfig);
         logger.info("Elasticsearch connection configuration updated.");
     }
 
-    public ElasticsearchConnection getConnectionConfig() {
-        return connection.get();
+    public ElasticsearchConnectionConfig getConnectionConfig() {
+        return connectionConfig.get();
     }
 }

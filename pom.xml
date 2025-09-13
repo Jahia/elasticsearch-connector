@@ -205,7 +205,7 @@
                             org.apache.lucene.search.*,
                             org.apache.lucene.util.*,
                             org.jahia.modules.elasticsearchconnector,
-                            org.jahia.modules.elasticsearchconnector.rest
+                            org.jahia.modules.elasticsearchconnector.service
                         </Export-Package>
                     </instructions>
                 </configuration>

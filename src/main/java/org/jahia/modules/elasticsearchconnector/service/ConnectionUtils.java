@@ -21,7 +21,7 @@
  *
  * ==========================================================================================
  */
-package org.jahia.modules.elasticsearchconnector.rest;
+package org.jahia.modules.elasticsearchconnector.service;
 
 import org.apache.hc.client5.http.auth.AuthScope;
 import org.apache.hc.client5.http.auth.CredentialsProvider;
@@ -34,6 +34,7 @@ import org.apache.hc.core5.net.NamedEndpoint;
 import org.apache.hc.core5.reactor.IOReactorConfig;
 import org.apache.hc.core5.reactor.ssl.SSLSessionVerifier;
 import org.apache.hc.core5.reactor.ssl.TlsDetails;
+import org.jahia.modules.elasticsearchconnector.config.ElasticsearchConnectionConfig;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -55,7 +56,7 @@ public final class ConnectionUtils {
      * @return {@code CredentialsProvider} that includes username, password credentials
      * from the ES connection config and uses host:port as scope for applicable auth requests.
      */
-    public static CredentialsProvider getCredentialsProvider(ElasticsearchConnection connConfig) {
+    public static CredentialsProvider getCredentialsProvider(ElasticsearchConnectionConfig connConfig) {
         BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(
                 new AuthScope(connConfig.getHost(), connConfig.getPort()), // Do we need AuthScope.ANY here?
@@ -68,7 +69,7 @@ public final class ConnectionUtils {
      * @return List of addresses that includes host:port from ES connection config, as well as additional host
      * addresses if specified, and converted into URI objects.
      */
-    public static List<URI> getAddresses(ElasticsearchConnection connConfig) {
+    public static List<URI> getAddresses(ElasticsearchConnectionConfig connConfig) {
         List<HttpHost> addresses = new ArrayList<>();
         String protocolScheme = connConfig.getProtocolScheme();
 

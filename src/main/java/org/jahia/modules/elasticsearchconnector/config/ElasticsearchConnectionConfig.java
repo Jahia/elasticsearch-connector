@@ -1,4 +1,4 @@
-package org.jahia.modules.elasticsearchconnector.rest;
+package org.jahia.modules.elasticsearchconnector.config;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jahia.utils.EncryptionUtils;
@@ -20,7 +20,7 @@ import static org.jahia.modules.elasticsearchconnector.ESConstants.*;
  * - Security settings (X-Pack security, encryption)
  * - Cluster configuration (additional hosts, sniffer interval)
  */
-public class ElasticsearchConnection {
+public class ElasticsearchConnectionConfig {
 
     private String id;
     private String host;
@@ -32,11 +32,11 @@ public class ElasticsearchConnection {
     private boolean useEncryption;
     private List<String> additionalHostAddresses;
 
-    public ElasticsearchConnection() {
+    public ElasticsearchConnectionConfig() {
         this.id = DB_ID;
     }
 
-    public ElasticsearchConnection(String id) {
+    public ElasticsearchConnectionConfig(String id) {
         this.id = id;
     }
 
@@ -141,7 +141,7 @@ public class ElasticsearchConnection {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ElasticsearchConnection that = (ElasticsearchConnection) o;
+        ElasticsearchConnectionConfig that = (ElasticsearchConnectionConfig) o;
         return useXPackSecurity == that.useXPackSecurity
                 && useEncryption == that.isUseEncryption()
                 && Objects.equals(id, that.getId())

@@ -1,4 +1,4 @@
-package org.jahia.modules.elasticsearchconnector.rest;
+package org.jahia.modules.elasticsearchconnector.service;
 
 public class ConnectionUnavailableException extends Exception {
 

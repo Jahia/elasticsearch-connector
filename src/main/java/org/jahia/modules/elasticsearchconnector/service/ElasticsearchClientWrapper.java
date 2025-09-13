@@ -1,4 +1,4 @@
-package org.jahia.modules.elasticsearchconnector.rest;
+package org.jahia.modules.elasticsearchconnector.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.GetRequest;
