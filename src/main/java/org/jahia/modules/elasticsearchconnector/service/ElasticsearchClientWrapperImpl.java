@@ -171,9 +171,9 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
         if (connConfig.getSnifferInterval() == null || sniffOnFailureListener == null) {
             return;
         }
-        ElasticsearchNodesSniffer.Scheme scheme = connConfig.isHttp() ?
-                ElasticsearchNodesSniffer.Scheme.HTTP :
-                ElasticsearchNodesSniffer.Scheme.HTTPS;
+        ElasticsearchNodesSniffer.Scheme scheme = connConfig.isUseEncryption() ?
+                ElasticsearchNodesSniffer.Scheme.HTTPS :
+                ElasticsearchNodesSniffer.Scheme.HTTP;
         ElasticsearchNodesSniffer nodesSniffer = new ElasticsearchNodesSniffer(restClient, 10000, scheme);
         int intervalMillis = connConfig.getSnifferIntervalMillis();
 

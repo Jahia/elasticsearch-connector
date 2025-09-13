@@ -117,10 +117,6 @@ public class ElasticsearchConnectionConfig {
         return isUseEncryption() ? "https" : "http";
     }
 
-    public boolean isHttp() {
-        return "http".equalsIgnoreCase(getProtocolScheme());
-    }
-
     public void setUseEncryption(boolean useEncryption) {
         this.useEncryption = useEncryption;
     }
