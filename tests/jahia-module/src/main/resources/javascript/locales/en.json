@@ -1,0 +1,13 @@
+{
+  "label": {
+    "settings": {
+      "title": "Elasticsearch Connector Test setting"
+    },
+    "action": {
+      "title": "Elasticsearch Connector Test - How to extend the ui ?"
+    },
+    "appsAccordion": {
+      "title": "Elasticsearch Connector Test"
+    }
+  }
+}
