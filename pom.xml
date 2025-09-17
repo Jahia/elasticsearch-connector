@@ -177,10 +177,6 @@
                             co.elastic.clients.transport.rest_client.*,
                             co.elastic.clients.json.*,
                             co.elastic.clients.util.*,
-                            com.carrotsearch.hppc.*,
-                            org.apache.lucene.search.join.*,
-                            org.apache.lucene.search.*,
-                            org.apache.lucene.util.*,
                             org.jahia.modules.elasticsearchconnector,
                             org.jahia.modules.elasticsearchconnector.service
                         </Export-Package>
