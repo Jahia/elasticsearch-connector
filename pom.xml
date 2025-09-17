@@ -48,7 +48,6 @@
         <jahia-module-type>system</jahia-module-type>
         <jahia-module-signature>MCwCFAMVz0MVJ6/3yxkZ4VOaADW9OOyiAhQxa+BID5cohO4ADLocbhkL92FCjA==</jahia-module-signature>
         <elasticsearch.version>9.1.3</elasticsearch.version>
-        <elasticsearch.deprecated.version>7.13.2</elasticsearch.deprecated.version>
         <jahia.nexus.staging.repository.id>40c27f27a86d2d</jahia.nexus.staging.repository.id>
         <jahia.plugin.version>6.13</jahia.plugin.version>
     </properties>
@@ -140,19 +139,6 @@
             <artifactId>httpclient5</artifactId>
             <version>5.5</version>
         </dependency>
-        <!-- Ask Alex if still relevant as we use sniffer in WrapperImpl -->
-        <!--        TODO elasticsearch-rest-client-sniffer and elasticsearch-rest-high-level-client need to be removed-->
-<!--        here only to make it work with AS before AS loses these references-->
-        <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-client-sniffer</artifactId>
-            <version>${elasticsearch.deprecated.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>${elasticsearch.deprecated.version}</version>
-        </dependency>
         <dependency>
             <groupId>co.elastic.clients</groupId>
             <artifactId>elasticsearch-java</artifactId>
@@ -179,31 +165,18 @@
                         <_invalidfilenames>CON(\..+)?|PRN(\..+)?|AUX(\..+)?|NUL(\..+)?|COM[1-9](\..+)?|LPT[1-9](\..+)?|\$Mft|\$MftMirr|\$LogFile|\$Volume|\$AttrDef|\$Bitmap|\$Boot|\$BadClus|\$Secure|\$Upcase|\$Extend|\$Quota|\$ObjId|\$Reparse</_invalidfilenames>
                         <_dsannotations>*</_dsannotations>
                         <Import-Package>
-                            com.unboundid.util;resolution:=optional,
-                            !org.elasticsearch.xpack.*,
-                            !org.elasticsearch.xpack.client.*,
-                            org.elasticsearch;resolution:=optional,
                             co.elastic;resolution:=optional,
-                            org.elasticsearch.*;resolution:=optional,
                             org.json;version="[20070829, 20231014)",
                             ${jahia.plugin.projectPackageImport},
                             *
                         </Import-Package>
                         <Export-Package>
-                            !org.elasticsearch.xpack.*,
-                            !org.elasticsearch.core.internal.*,
-                            org.elasticsearch,
-                            org.elasticsearch.*,
                             co.elastic,
                             co.elastic.clients.elasticsearch.*,
                             co.elastic.clients.transport.*,
                             co.elastic.clients.transport.rest_client.*,
                             co.elastic.clients.json.*,
                             co.elastic.clients.util.*,
-                            com.carrotsearch.hppc.*,
-                            org.apache.lucene.search.join.*,
-                            org.apache.lucene.search.*,
-                            org.apache.lucene.util.*,
                             org.jahia.modules.elasticsearchconnector,
                             org.jahia.modules.elasticsearchconnector.service
                         </Export-Package>
