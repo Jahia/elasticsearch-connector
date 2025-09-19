@@ -57,18 +57,13 @@
     <groupId>org.jahia.test</groupId>
     <artifactId>elasticsearch-connector-test</artifactId>
     <name>Elasticsearch Connector Test</name>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <description>This is the custom module (Elasticsearch Connector Test) for running on a Jahia server.</description>
 
     <properties>
         <jahia.plugin.version>6.13</jahia.plugin.version>
     </properties>
-
-    <scm>
-        <connection>scm:dummy:uri</connection>
-        <developerConnection>scm:dummy:uri</developerConnection>
-    </scm>
 
     <repositories>
         <repository>

@@ -1,0 +1,10 @@
+- addMavenRepository: 'https://devtools.jahia.com/nexus/content/groups/enterprise/@id=jahia-enterprise@snapshots'
+  username: ${env:NEXUS_USERNAME}
+  password: ${env:NEXUS_PASSWORD}
+- installBundle:
+    - 'mvn:org.jahia.modules/elasticsearch-connector'
+  autoStart: true
+  uninstallPreviousVersion: true
+- editConfiguration: "org.jahia.modules.elasticsearchConnector"
+  properties:
+    elasticsearchConnector.password: ${env:ELASTIC_PWD_ENCODED}
