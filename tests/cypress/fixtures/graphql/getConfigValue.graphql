@@ -1,0 +1,9 @@
+query getConfig($pid: String!, $key: String!) {
+    admin {
+        jahia {
+            configuration(pid: $pid) {
+                value(name: $key)
+            }
+        }
+    }
+}

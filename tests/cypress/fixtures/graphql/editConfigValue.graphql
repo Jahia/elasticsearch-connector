@@ -1,0 +1,9 @@
+mutation editConfig($pid: String!, $key: String!, $value: String!) {
+    admin {
+        jahia {
+            configuration(pid: $pid) {
+                value(name: $key, value: $value)
+            }
+        }
+    }
+}
