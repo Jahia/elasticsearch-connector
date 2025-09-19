@@ -15,7 +15,7 @@ jobs:
     name: Update module signature
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: jahia/jahia-modules-action/update-signature@v2
         with:
           nexus_username: ${{ secrets.NEXUS_USERNAME }}
@@ -32,7 +32,7 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: jahia/jahia-modules-action/build@v2
         with:
           nexus_username: ${{ secrets.NEXUS_USERNAME }}
@@ -44,13 +44,26 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     container:
-      image: cyclonedx/cyclonedx-cli:0.24.2   
+      image: cyclonedx/cyclonedx-cli:0.24.2
     steps:
       - uses: jahia/jahia-modules-action/sbom-processing@v2
         with:
           dependencytrack_hostname: ${{ vars.DEPENDENCYTRACK_HOSTNAME }}
           dependencytrack_apikey: ${{ secrets.DEPENDENCYTRACK_APIKEY }}
           sbom_artifacts: 'build-artifacts'
+
+  integration-tests-standalone:
+    uses:  Jahia/jahia-modules-action/.github/workflows/reusable-integration-tests.yml@v2
+    needs: build   
+    secrets: inherit
+    with:
+      jahia_image: jahia/jahia-ee-dev:8-SNAPSHOT
+      module_id: elasticsearch-connector
+      testrail_project: Elasticsearch connector
+      pagerduty_skip_notification: true
+      provisioning_manifest: provisioning-manifest-build.yml
+      artifact_prefix: elasticsearch-connector-artifacts
+      module_branch: ${{ github.head_ref }}
 
   publish:
     name: Publish module
@@ -63,7 +76,7 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: jahia/jahia-modules-action/publish@v2
         with:
           nexus_username: ${{ secrets.NEXUS_USERNAME }}
