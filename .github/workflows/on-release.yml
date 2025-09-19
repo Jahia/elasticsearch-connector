@@ -12,3 +12,4 @@ jobs:
     secrets: inherit 
     with:
       primary_release_branch: "master"
+      job_container: "jahia/cimg-mvn-cache:cimg_openjdk_17.0.9-node"
