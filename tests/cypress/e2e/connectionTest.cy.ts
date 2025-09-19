@@ -1,26 +1,22 @@
-import {deleteConfigValue, editConfigValue, getConfigValue, testConnection} from '../fixtures/utils';
+import {deleteConfigValue, editConfigValue, testConnection} from '../fixtures/utils';
 
 describe('Elasticsearch connection tests', () => {
+    const success = true;
+    const fail = false;
+
     it('connects successfully', () => {
-        testConnection().then(result => {
-            assert(result);
-        });
+        const pwd = Cypress.env('ELASTIC_PASSWORD_ENCODED');
+        cy.log(`Setting ES password: ${pwd}`);
+        editConfigValue('elasticsearchConnector.password', pwd);
+        testConnection(success);
     });
 
     it('fails test connection with invalid config', () => {
         const hostKey = 'elasticsearchConnector.host';
-        const invalidHost = 'test';
 
-        // Change host to invalidEnv
-        editConfigValue(hostKey, invalidHost)
-            .then(() => getConfigValue(hostKey))
-            .then(result => {
-                expect(result).to.equal(invalidHost);
-            });
-
-        testConnection().then(result => {
-            assert(!result);
-        });
+        // Change host to invalidEnv and expect test to fail
+        editConfigValue(hostKey, 'test');
+        testConnection(fail);
 
         // Clean-up: change host back to default value ("elasticsearch")
         deleteConfigValue(hostKey);

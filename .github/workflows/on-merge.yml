@@ -64,6 +64,7 @@ jobs:
       provisioning_manifest: provisioning-manifest-build.yml
       artifact_prefix: elasticsearch-connector-artifacts
       module_branch: ${{ github.head_ref }}
+      mvn_java_version: 17
 
   publish:
     name: Publish module

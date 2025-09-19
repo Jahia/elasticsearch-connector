@@ -5,6 +5,3 @@
     - 'mvn:org.jahia.modules/elasticsearch-connector'
   autoStart: true
   uninstallPreviousVersion: true
-- editConfiguration: "org.jahia.modules.elasticsearchConnector"
-  properties:
-    elasticsearchConnector.password: ${env:ELASTIC_PWD_ENCODED}

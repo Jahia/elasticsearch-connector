@@ -8,14 +8,17 @@
 // You can read more here:
 // https://on.cypress.io/plugins-guide
 // ***********************************************************
+const env = require('./env')
+
 
 // This function is called when a project is opened or re-opened (e.g. due to
 // the project's config changing)
-
 /**
  * @type {Cypress.PluginConfig}
  */
 module.exports = (on, config) => {
+    env(on, config);
+
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     require('@jahia/cypress/dist/plugins/registerPlugins').registerPlugins(on, config);
     // eslint-disable-next-line @typescript-eslint/no-var-requires

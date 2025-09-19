@@ -1,18 +1,22 @@
-import Chainable = Cypress.Chainable;
-
-export const testConnection = (): Chainable<boolean> => {
-    return cy.apollo({
+export const testConnection = (expected: boolean): void => {
+    cy.apollo({
         queryFile: 'graphql/testConnection.graphql'
     }).then(resp => {
         return resp.data.admin.elasticsearch.testConnection;
+    }).then((result: boolean) => {
+        expect(result).to.equal(expected);
     });
 };
 
-export const editConfigValue = (key: string, value: string, pid: string = 'org.jahia.modules.elasticsearchConnector') => {
-    return cy.apollo({
+export const editConfigValue = (key: string, value: string, pid: string = 'org.jahia.modules.elasticsearchConnector') : void => {
+    cy.apollo({
         mutationFile: 'graphql/editConfigValue.graphql',
         variables: {pid, key, value}
-    });
+    })
+        .then(() => getConfigValue(key))
+        .then(result => {
+            expect(result).to.equal(value);
+        });
 };
 
 export const getConfigValue = (key: string, pid: string = 'org.jahia.modules.elasticsearchConnector') => {

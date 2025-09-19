@@ -69,3 +69,4 @@ jobs:
       artifact_prefix: elasticsearch-connector-artifacts
       module_branch: ${{ github.head_ref }}
       should_skip_testrail: true
+      mvn_java_version: 17
