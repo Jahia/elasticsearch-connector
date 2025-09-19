@@ -19,6 +19,7 @@ import org.apache.hc.core5.reactor.IOReactorConfig;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.ssl.TrustStrategy;
 import org.jahia.modules.elasticsearchconnector.ESConstants;
+import org.jahia.modules.elasticsearchconnector.config.ConnectionConfigException;
 import org.jahia.modules.elasticsearchconnector.config.ElasticsearchConfig;
 import org.jahia.modules.elasticsearchconnector.config.ElasticsearchConnectionConfig;
 import org.jahia.settings.SettingsBean;
@@ -185,7 +186,7 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
     }
 
     private void handleSecurityConfiguration(Rest5ClientBuilder restClientBuilder,
-            IOReactorConfig reactorConfig, ElasticsearchConnectionConfig connConfig) {
+            IOReactorConfig reactorConfig, ElasticsearchConnectionConfig connConfig) throws ConnectionUnavailableException {
         try {
             final SSLContext sslContext;
             boolean isDevMode = SettingsBean.getInstance().isDevelopmentMode();
@@ -211,7 +212,9 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
                 });
             }
         } catch (GeneralSecurityException ex) {
-            logger.error("Failed to configure SSL context when configuring ES Rest Client", ex);
+            throw new ConnectionUnavailableException("Failed to configure SSL context when configuring ES Rest Client", ex);
+        } catch (ConnectionConfigException ex) {
+            throw new ConnectionUnavailableException("Unable to decode credentials from existing configuration", ex);
         }
     }
 
@@ -283,25 +286,43 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
     }
 
     /**
-     * Create test clients and test elasticsearch connections
+     * Test elasticsearch connections.
+     * Use existing client if it exists, otherwise create a test client connection.
      * @precondition connectionConfig has been initialized; call resolveConnectionConfig() otherwise.
      * @throws IOException
      * @throws ConnectionUnavailableException
      */
     private void doTestConnection() throws IOException, ConnectionUnavailableException {
-        // Should we still init separate test client connection if real connections already exist?
-        ElasticsearchClients testClients = resolveClient(true);
-        logger.debug("Sending test ping elasticsearch connection...");
-        if (!testClients.getElasticsearchClient().ping().value()) {
-            throw new ConnectionUnavailableException("Elasticsearch cluster is not responding");
-        } else {
-            logger.debug("Elasticsearch test ping request sent successfully.");
-        }
+        ElasticsearchClient testClient = null;
+        ElasticsearchClients testClients = null;
+        boolean createdTestClient = false;
 
         try {
-            testClients.getElasticsearchClient().close();
-        } catch (IOException e) {
-            logger.warn("Failed to close test clients: {}", e.getMessage());
+            // Use existing client or create a new test client
+            if (this.client != null) {
+                testClient = this.client;
+            } else {
+                logger.debug("Creating test client...");
+                testClients = resolveClient(true);
+                testClient = testClients.getElasticsearchClient();
+                createdTestClient = true;
+                logger.debug("Test client created successfully.");
+            }
+
+            logger.debug("Sending test ping elasticsearch connection...");
+            if (!testClient.ping().value()) {
+                throw new ConnectionUnavailableException("Elasticsearch cluster is not responding");
+            }
+            logger.debug("Elasticsearch test ping request sent successfully.");
+        } finally {
+            // Only close resources we created in this method
+            if (createdTestClient && testClient != null) {
+                try {
+                    testClient.close();
+                } catch (IOException e) {
+                    logger.warn("Failed to close test clients: {}", e.getMessage());
+                }
+            }
         }
     }
 
