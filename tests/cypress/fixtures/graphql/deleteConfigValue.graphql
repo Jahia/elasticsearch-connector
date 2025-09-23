@@ -1,0 +1,9 @@
+mutation deleteConfigValue($pid: String!, $key: String!) {
+    admin {
+        jahia {
+            configuration(pid: $pid) {
+                remove(name: $key)
+            }
+        }
+    }
+}

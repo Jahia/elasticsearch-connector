@@ -2,6 +2,8 @@ package org.jahia.modules.elasticsearchconnector.config;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jahia.utils.EncryptionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
@@ -21,6 +23,7 @@ import static org.jahia.modules.elasticsearchconnector.ESConstants.*;
  * - Cluster configuration (additional hosts, sniffer interval)
  */
 public class ElasticsearchConnectionConfig {
+    private static final Logger logger = LoggerFactory.getLogger(ElasticsearchConnectionConfig.class);
 
     private String id;
     private String host;
@@ -76,8 +79,12 @@ public class ElasticsearchConnectionConfig {
         return this.password;
     }
 
-    public char[] decodePassword() {
-        return EncryptionUtils.passwordBaseDecrypt(this.password).toCharArray();
+    public char[] decodePassword() throws ConnectionConfigException {
+        try {
+            return EncryptionUtils.passwordBaseDecrypt(this.password).toCharArray();
+        } catch (Exception e) {
+            throw new ConnectionConfigException("Unable to decode password from existing configuration", e);
+        }
     }
 
     public void setPassword(String password) {

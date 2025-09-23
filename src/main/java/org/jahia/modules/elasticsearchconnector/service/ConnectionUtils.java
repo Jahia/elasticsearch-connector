@@ -34,6 +34,7 @@ import org.apache.hc.core5.net.NamedEndpoint;
 import org.apache.hc.core5.reactor.IOReactorConfig;
 import org.apache.hc.core5.reactor.ssl.SSLSessionVerifier;
 import org.apache.hc.core5.reactor.ssl.TlsDetails;
+import org.jahia.modules.elasticsearchconnector.config.ConnectionConfigException;
 import org.jahia.modules.elasticsearchconnector.config.ElasticsearchConnectionConfig;
 
 import javax.net.ssl.SSLContext;
@@ -56,7 +57,7 @@ public final class ConnectionUtils {
      * @return {@code CredentialsProvider} that includes username, password credentials
      * from the ES connection config and uses host:port as scope for applicable auth requests.
      */
-    public static CredentialsProvider getCredentialsProvider(ElasticsearchConnectionConfig connConfig) {
+    public static CredentialsProvider getCredentialsProvider(ElasticsearchConnectionConfig connConfig) throws ConnectionConfigException {
         BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(
                 new AuthScope(connConfig.getHost(), connConfig.getPort()), // Do we need AuthScope.ANY here?
