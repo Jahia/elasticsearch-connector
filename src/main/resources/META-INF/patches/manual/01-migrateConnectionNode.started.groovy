@@ -11,8 +11,8 @@ import groovy.json.JsonSlurper
  * Note that we still keep the JCR connection node after migration.
  */
 
-// Optional: Fill in this variable to migrate a specific connection ID
-// Otheriwse, leaving it empty will migrate a single connection or do nothing if there's more than one.
+// Optional: Fill in this variable to migrate a specific connection ID (dc:id node property)
+// Otherwise, leaving it empty will migrate a single connection or do nothing if there's more than one.
 String connectionId = "";
 
 /**
