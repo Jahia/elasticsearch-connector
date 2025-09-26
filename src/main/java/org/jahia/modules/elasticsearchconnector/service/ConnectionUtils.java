@@ -60,7 +60,7 @@ public final class ConnectionUtils {
     public static CredentialsProvider getCredentialsProvider(ElasticsearchConnectionConfig connConfig) throws ConnectionConfigException {
         BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(
-                new AuthScope(connConfig.getHost(), connConfig.getPort()), // Do we need AuthScope.ANY here?
+                new AuthScope(null, -1), // Matches ANY host and port. Giving specific ones leads to eventual loss of connection
                 new UsernamePasswordCredentials(connConfig.getUser(), connConfig.decodePassword())
         );
         return credentialsProvider;
