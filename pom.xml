@@ -190,7 +190,7 @@
                             org.jahia.modules.graphql.provider.dxm,
                             org.jahia.modules.graphql.provider.dxm.admin,
                             org.jahia.modules.graphql.provider.dxm.osgi.annotations,
-                            org.json;version="[20070829, 20231014)",
+                            org.json;version="[20070829,20231014)",
                             ${jahia.plugin.projectPackageImport},
                             *
                         </Import-Package>

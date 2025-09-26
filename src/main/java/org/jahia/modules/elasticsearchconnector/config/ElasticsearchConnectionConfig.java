@@ -35,6 +35,8 @@ public class ElasticsearchConnectionConfig {
     private boolean useEncryption;
     private List<String> additionalHostAddresses;
 
+    private int snifferIntervalMillis;
+
     public ElasticsearchConnectionConfig() {
         this.id = DB_ID;
     }
@@ -97,6 +99,35 @@ public class ElasticsearchConnectionConfig {
 
     public void setSnifferInterval(String snifferInterval) {
         this.snifferInterval = (snifferInterval == null || snifferInterval.trim().isEmpty()) ? DEFAULT_SNIFFER_INTERVAL : snifferInterval;
+        String interval = getSnifferInterval();
+        if (interval == null || interval.isEmpty()) {
+            this.snifferIntervalMillis = -1;
+        }
+
+        // Extract number and unit using regex
+        String number = interval.replaceAll("[^0-9]", "");
+        String unit = interval.replaceAll("[0-9]", "").trim().toLowerCase();
+
+        try {
+            int value = Integer.parseInt(number);
+
+            // Convert to milliseconds based on unit
+            switch (unit) {
+                case "s":
+                    this.snifferIntervalMillis = value * 1000;
+                    break;
+                case "m":
+                    this.snifferIntervalMillis = value * 60 * 1000;
+                    break;
+                default:
+                    logger.warn("Unknown time unit '{}' in interval '{}', defaulting to seconds", unit, interval);
+                    this.snifferIntervalMillis = value * 1000;
+                    break;
+            }
+        } catch (NumberFormatException e) {
+            logger.error("Failed to parse snifferInterval: {}", interval, e);
+            this.snifferIntervalMillis = -1;
+        }
     }
 
     public String getSnifferInterval() {
@@ -104,8 +135,7 @@ public class ElasticsearchConnectionConfig {
     }
 
     public int getSnifferIntervalMillis() {
-        String interval = getSnifferInterval();
-        return (interval != null) ? Integer.parseInt(interval.replaceAll("[^0-9]", "")) * 1000 : -1;
+        return this.snifferIntervalMillis;
     }
 
     public boolean isUseXPackSecurity() {
