@@ -133,8 +133,19 @@ def extractConnectionProperties = {JCRNodeWrapper connectionNode -> {
 }}
 
 /**
- *
+ * Add {propertyName: value} in props, if value is not null; otherwise, remove propertyName key in props
  */
+def handleProperty = {Dictionary props, String propertyName, Object value -> {
+    if (value != null) {
+        props.put(propertyName, value)
+        log.info("Setting {} property: {}", propertyName, value)
+    } else if (props.get(propertyName) != null) {
+        // If value is null but property exists in config, remove it
+        props.remove(propertyName)
+        log.info("Removing {} property as it's not in extracted props", propertyName)
+    }
+}}
+
 def migrationCallback = {session ->
     try {
         // Find the Elasticsearch connection node
@@ -170,46 +181,16 @@ def migrationCallback = {session ->
                 props = new java.util.Hashtable<>()
             }
 
-            // Only add properties that are not null
-            if (connectionProps.host != null) {
-                props.put("elasticsearchConnector.host", connectionProps.host)
-                log.info("Setting elasticsearchConnector.host property: {}", connectionProps.host)
-            }
+            // Update properties - either set if not null, or remove if null and exists in config
+            handleProperty(props, "elasticsearchConnector.host", connectionProps.host);
+            handleProperty(props, "elasticsearchConnector.port", connectionProps.port);
+            handleProperty(props, "elasticsearchConnector.user", connectionProps.user);
+            handleProperty(props, "elasticsearchConnector.password", connectionProps.password);
+            handleProperty(props, "elasticsearchConnector.useXPackSecurity", connectionProps.useXPackSecurity);
+            handleProperty(props, "elasticsearchConnector.useEncryption", connectionProps.useEncryption);
+            handleProperty(props, "elasticsearchConnector.snifferInterval", connectionProps.nodesSnifferInterval);
 
-            if (connectionProps.port != null) {
-                props.put("elasticsearchConnector.port", connectionProps.port)
-                log.info("Setting elasticsearchConnector.port property: {}", connectionProps.port)
-            }
-
-            if (connectionProps.user != null) {
-                props.put("elasticsearchConnector.user", connectionProps.user)
-                log.info("Setting elasticsearchConnector.user property")
-            }
-
-            if (connectionProps.password != null) {
-                props.put("elasticsearchConnector.password", connectionProps.password)
-                log.info("Setting elasticsearchConnector.password property")
-            }
-
-            // Add the parsed JSON options to the configuration (only if not null)
-            if (connectionProps.useXPackSecurity != null) {
-                props.put("elasticsearchConnector.useXPackSecurity", connectionProps.useXPackSecurity)
-                log.info("Setting elasticsearchConnector.useXPackSecurity property: {}", connectionProps.useXPackSecurity)
-            }
-
-            if (connectionProps.useEncryption != null) {
-                props.put("elasticsearchConnector.useEncryption", connectionProps.useEncryption)
-                log.info("Setting elasticsearchConnector.useEncryption property: {}", connectionProps.useEncryption)
-            }
-
-            // Add a description/comment to the configuration
-            // Add nodeSniffer interval if available
-            if (connectionProps.nodesSnifferInterval != null) {
-                props.put("elasticsearchConnector.snifferInterval", connectionProps.nodesSnifferInterval)
-                log.info("Setting elasticsearchConnector.nodeSniffer property: {}", connectionProps.nodesSnifferInterval)
-            }
-
-            // Add additional host addresses as indexed properties
+            // Handle additional host addresses specially since it's an array
             if (connectionProps.additionalHostAddresses && !connectionProps.additionalHostAddresses.isEmpty()) {
                 // Convert the list to a Vector which is compatible with OSGI config
                 java.util.Vector<String> addressVector = new java.util.Vector<String>(connectionProps.additionalHostAddresses)
@@ -219,6 +200,10 @@ def migrationCallback = {session ->
                 connectionProps.additionalHostAddresses.eachWithIndex { address, index ->
                     log.info("  additionalHostAddress[{}]: {}", index, address)
                 }
+            } else if (props.get("elasticsearchConnector.additionalHostAddresses") != null) {
+                // Remove the property if it exists in config but is null/empty in extracted props
+                props.remove("elasticsearchConnector.additionalHostAddresses")
+                log.info("Removing elasticsearchConnector.additionalHostAddresses property as it's not in extracted props")
             }
 
             // Update the configuration
