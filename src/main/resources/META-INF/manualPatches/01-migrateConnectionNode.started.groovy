@@ -138,7 +138,10 @@ def extractConnectionProperties = {JCRNodeWrapper connectionNode -> {
 def handleProperty = {Dictionary props, String propertyName, Object value -> {
     if (value != null) {
         props.put(propertyName, value)
-        log.info("Setting {} property: {}", propertyName, value)
+        // Avoid logging sensitive info
+        if (propertyName != "elasticsearchConnector.password") {
+            log.info("Setting {} property: {}", propertyName, value)
+        }
     } else if (props.get(propertyName) != null) {
         // If value is null but property exists in config, remove it
         props.remove(propertyName)
