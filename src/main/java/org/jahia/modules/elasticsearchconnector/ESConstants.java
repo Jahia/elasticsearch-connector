@@ -18,6 +18,6 @@ public final class ESConstants {
     public static final boolean DEFAULT_USE_XPACK_SECURITY = false;
     public static final String DEFAULT_USE_ENCRYPTION_STR = "false";
     public static final boolean DEFAULT_USE_ENCRYPTION = false;
-    public static final String DEFAULT_SNIFFER_INTERVAL = "5s";
+    public static final String DEFAULT_SNIFFER_INTERVAL = "";
     public static final String DEFAULT_USER = "elastic";
 }
