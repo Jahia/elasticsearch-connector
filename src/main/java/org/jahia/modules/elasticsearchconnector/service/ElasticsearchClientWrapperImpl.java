@@ -151,7 +151,7 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
 
         // Create default sniff failure listener before building client
         SniffOnFailureListener sniffOnFailureListener = null;
-        if (!isTestClient && connectionConfig.getSnifferInterval() != null) {
+        if (!isTestClient && connectionConfig.getSnifferIntervalMillis() >= 0) {
             logger.debug("Initializing Sniffer configurations");
             sniffOnFailureListener = new SniffOnFailureListener();
             builder.setFailureListener(sniffOnFailureListener);
@@ -169,7 +169,7 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
     }
 
     private void configureSniffer(Rest5Client restClient, SniffOnFailureListener sniffOnFailureListener, ElasticsearchConnectionConfig connConfig) {
-        if (connConfig.getSnifferInterval() == null || sniffOnFailureListener == null) {
+        if (connConfig.getSnifferIntervalMillis() < 0 || sniffOnFailureListener == null) {
             return;
         }
         ElasticsearchNodesSniffer.Scheme scheme = connConfig.isUseEncryption() ?

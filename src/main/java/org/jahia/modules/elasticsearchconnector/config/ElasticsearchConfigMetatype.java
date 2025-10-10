@@ -53,7 +53,7 @@ public @interface ElasticsearchConfigMetatype {
 
     @AttributeDefinition(
             name = "Nodes Sniffer Interval",
-            description = "Interval for node sniffing (e.g., 5s)",
+            description = "Interval for node sniffing (e.g., 5s); Sniffer is disabled if set to empty string or invalid interval",
             defaultValue = DEFAULT_SNIFFER_INTERVAL
     )
     String elasticsearchConnector_snifferInterval() default DEFAULT_SNIFFER_INTERVAL;
