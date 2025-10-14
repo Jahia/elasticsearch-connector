@@ -102,6 +102,7 @@ public class ElasticsearchConnectionConfig {
         String interval = getSnifferInterval();
         if (interval == null || interval.isEmpty()) {
             this.snifferIntervalMillis = -1;
+            return;
         }
 
         // Extract number and unit using regex
