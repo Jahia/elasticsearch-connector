@@ -202,9 +202,6 @@
                             co.elastic.clients.json.*,
                             co.elastic.clients.util.*,
                             jakarta.json,
-                            <!-- Needed for resolving ES connection within graphql context-->
-                            com.fasterxml.jackson.annotation,
-                            com.fasterxml.jackson.databind,
                             org.jahia.modules.elasticsearchconnector,
                             org.jahia.modules.elasticsearchconnector.service
                         </Export-Package>
