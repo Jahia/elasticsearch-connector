@@ -33,7 +33,7 @@
     </parent>
     <artifactId>elasticsearch-connector</artifactId>
     <name>Elastic Search Connector</name>
-    <version>4.1.0-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <description>This is a custom module (ElasticSearch Connector) for running on a Jahia.</description>
 
