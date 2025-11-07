@@ -50,6 +50,7 @@
         <elasticsearch.version>9.1.3</elasticsearch.version>
         <jahia.nexus.staging.repository.id>40c27f27a86d2d</jahia.nexus.staging.repository.id>
         <jahia.plugin.version>6.13</jahia.plugin.version>
+        <nexus.maven.plugin.version>1.7.0</nexus.maven.plugin.version>
         <jahia-depends>graphql-dxm-provider</jahia-depends>
     </properties>
 
