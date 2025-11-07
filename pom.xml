@@ -235,6 +235,17 @@
                     <outputName>java-bom.cdx</outputName>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.7.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <nexusUrl>https://devtools.jahia.com/nexus/</nexusUrl>
+                    <serverId>staging-repository</serverId>
+                    <stagingProfileId>${jahia.nexus.staging.repository.id}</stagingProfileId>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
