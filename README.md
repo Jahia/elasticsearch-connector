@@ -9,8 +9,7 @@ Note that as of version 4.0.0 `database-connector` is no longer necessary to est
 
 #### Setting up a connection
 
-You can set up a connection by modifying [org.jahia.modules.elasticsearchConnector.cfg]
-(src%2Fmain%2Fresources%2FMETA-INF%2Fconfigurations%2Forg.jahia.modules.elasticsearchConnector.cfg) file. 
+You can set up a connection by modifying [org.jahia.modules.elasticsearchConnector.cfg](src%2Fmain%2Fresources%2FMETA-INF%2Fconfigurations%2Forg.jahia.modules.elasticsearchConnector.cfg) file. 
 
 #### Using connection
 
