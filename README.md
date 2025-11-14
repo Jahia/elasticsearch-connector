@@ -1,17 +1,16 @@
-|  | Badges | 
-| --- | --- |
-| Module | ![ID](https://img.shields.io/badge/ID-elasticsearch--connector-blue) [![Store](https://img.shields.io/badge/Jahia%20Store-Yes-brightgreen)](https://store.jahia.com/contents/modules-repository/org/jahia/modules/elasticsearch-connector.html) |
-| Artifacts | [![Snapshot](https://img.shields.io/badge/Snapshot-Nexus-blue)](https://devtools.jahia.com/nexus/content/repositories/jahia-enterprise-snapshots/org/jahia/modules/elasticsearch-connector-7/) [![Release](https://img.shields.io/badge/Release-Nexus-blue)](https://devtools.jahia.com/nexus/content/repositories/jahia-enterprise-releases/org/jahia/modules/elasticsearch-connector-7/) |
+<a href="https://www.jahia.com/">
+    <img src="https://www.jahia.com/modules/jahiacom-templates/images/jahia-3x.png" alt="Jahia logo" title="Jahia" align="right" height="60" />
+</a>
 
 # Elasticsearch connector
 
 Note that as of version 4.0.0 `database-connector` is no longer necessary to establish connection to `Elasticsearch`.
 
-#### Setting up a connection
+## Setting up a connection
 
 You can set up a connection by modifying [org.jahia.modules.elasticsearchConnector.cfg](src%2Fmain%2Fresources%2FMETA-INF%2Fconfigurations%2Forg.jahia.modules.elasticsearchConnector.cfg) file. 
 
-#### Using connection
+## Using connection
 
 1. To use connection in a module add a dependency on `elasticsearch-connector`.
 
@@ -21,3 +20,7 @@ You can set up a connection by modifying [org.jahia.modules.elasticsearchConnect
 
 As of 4.0.0 you can only have one connection, and it can only be configured via the `.cfg` file mentioned above. There is no UI. 
 Connection will be created/updated on demand once any of the `ElasticsearchClientWrapper` API is used. 
+
+## Open-Source
+
+This is an Open-Source module, you can find more details about Open-Source @ Jahia [in this repository](https://github.com/Jahia/open-source).
