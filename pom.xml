@@ -33,7 +33,7 @@
     </parent>
     <artifactId>elasticsearch-connector</artifactId>
     <name>Elastic Search Connector</name>
-    <version>4.1.0-SNAPSHOT</version>
+    <version>4.0.1-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <description>This is a custom module (ElasticSearch Connector) for running on a Jahia.</description>
 
@@ -46,7 +46,7 @@
 
     <properties>
         <jahia-module-type>system</jahia-module-type>
-        <jahia-module-signature>MCwCFBe0BJ0CM48yZ4tChmFXBkFkW4ifAhRULmSVw3c57Ic2yd6AFXHbqc/H5A==</jahia-module-signature>
+        <jahia-module-signature>MCwCFAMVz0MVJ6/3yxkZ4VOaADW9OOyiAhQxa+BID5cohO4ADLocbhkL92FCjA==</jahia-module-signature>
         <elasticsearch.version>9.1.3</elasticsearch.version>
         <jahia.nexus.staging.repository.id>40c27f27a86d2d</jahia.nexus.staging.repository.id>
         <jahia.plugin.version>6.13</jahia.plugin.version>
