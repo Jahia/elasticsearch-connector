@@ -27,19 +27,15 @@ import org.apache.hc.client5.http.auth.AuthScope;
 import org.apache.hc.client5.http.auth.CredentialsProvider;
 import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
 import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.ssl.ClientTlsStrategyBuilder;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.core5.http.HttpHost;
-import org.apache.hc.core5.http.nio.ssl.BasicClientTlsStrategy;
 import org.apache.hc.core5.http.nio.ssl.TlsStrategy;
-import org.apache.hc.core5.net.NamedEndpoint;
 import org.apache.hc.core5.reactor.IOReactorConfig;
-import org.apache.hc.core5.reactor.ssl.SSLSessionVerifier;
-import org.apache.hc.core5.reactor.ssl.TlsDetails;
 import org.jahia.modules.elasticsearchconnector.config.ConnectionConfigException;
 import org.jahia.modules.elasticsearchconnector.config.ElasticsearchConnectionConfig;
 
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -104,14 +100,10 @@ public final class ConnectionUtils {
      * @return TlsStrategy that disables hostname verification
      */
     public static TlsStrategy getNoopHostnameStrategy(SSLContext sslContext) {
-        // SSLSessionVerifier that effectively disables hostname verification
-        SSLSessionVerifier noopVerifier = new SSLSessionVerifier() {
-            @Override
-            public TlsDetails verify(NamedEndpoint namedEndpoint, SSLEngine sslEngine) throws SSLException {
-                return new TlsDetails(sslEngine.getSession(), sslEngine.getSession().getProtocol());
-            }
-        };
-        return new BasicClientTlsStrategy(sslContext, noopVerifier);
+        return ClientTlsStrategyBuilder.create()
+                .setSslContext(sslContext)
+                .setHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+                .buildAsync();
     }
 
     /**
