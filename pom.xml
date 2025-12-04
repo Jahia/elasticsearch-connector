@@ -46,7 +46,7 @@
 
     <properties>
         <jahia-module-type>system</jahia-module-type>
-        <jahia-module-signature>MCwCFAMVz0MVJ6/3yxkZ4VOaADW9OOyiAhQxa+BID5cohO4ADLocbhkL92FCjA==</jahia-module-signature>
+        <jahia-module-signature>MCwCFE9rcd4s5QmiaJo9qd+OMk8Hhia1AhRMD9bmeasgkKpD5YuClQZ9KJiQRQ==</jahia-module-signature>
         <elasticsearch.version>9.1.3</elasticsearch.version>
         <jahia.nexus.staging.repository.id>40c27f27a86d2d</jahia.nexus.staging.repository.id>
         <jahia.plugin.version>6.13</jahia.plugin.version>
