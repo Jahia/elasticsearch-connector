@@ -23,13 +23,11 @@
  */
 package org.jahia.modules.elasticsearchconnector.service;
 
-import org.apache.hc.client5.http.auth.AuthScope;
-import org.apache.hc.client5.http.auth.CredentialsProvider;
-import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
-import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
 import org.apache.hc.client5.http.ssl.ClientTlsStrategyBuilder;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.apache.hc.core5.http.nio.ssl.TlsStrategy;
 import org.apache.hc.core5.reactor.IOReactorConfig;
 import org.jahia.modules.elasticsearchconnector.config.ConnectionConfigException;
@@ -38,7 +36,9 @@ import org.jahia.modules.elasticsearchconnector.config.ElasticsearchConnectionCo
 import javax.net.ssl.SSLContext;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -50,16 +50,12 @@ public final class ConnectionUtils {
     }
 
     /**
-     * @return {@code CredentialsProvider} that includes username, password credentials
-     * from the ES connection config and uses host:port as scope for applicable auth requests.
+     * @return Preemptive Basic Authorization headers built from the ES connection config credentials.
      */
-    public static CredentialsProvider getCredentialsProvider(ElasticsearchConnectionConfig connConfig) throws ConnectionConfigException {
-        BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(
-                new AuthScope(null, -1), // Matches ANY host and port. Giving specific ones leads to eventual loss of connection
-                new UsernamePasswordCredentials(connConfig.getUser(), connConfig.decodePassword())
-        );
-        return credentialsProvider;
+    public static Header[] getAuthHeaders(ElasticsearchConnectionConfig connConfig) throws ConnectionConfigException {
+        String credentials = connConfig.getUser() + ":" + new String(connConfig.decodePassword());
+        String encoded = Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
+        return new Header[]{ new BasicHeader("Authorization", "Basic " + encoded) };
     }
 
     /**
