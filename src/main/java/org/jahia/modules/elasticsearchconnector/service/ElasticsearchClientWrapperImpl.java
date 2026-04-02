@@ -10,7 +10,6 @@ import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
 import co.elastic.clients.transport.rest5_client.low_level.sniffer.ElasticsearchNodesSniffer;
 import co.elastic.clients.transport.rest5_client.low_level.sniffer.SniffOnFailureListener;
 import co.elastic.clients.transport.rest5_client.low_level.sniffer.Sniffer;
-import org.apache.hc.client5.http.auth.CredentialsProvider;
 import org.apache.hc.client5.http.ssl.TrustAllStrategy;
 import org.apache.hc.core5.http.ParseException;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
@@ -196,12 +195,10 @@ public class ElasticsearchClientWrapperImpl implements ElasticsearchClientWrappe
             sslContext = SSLContexts.custom().loadTrustMaterial(sslTrustStrategy).build();
             restClientBuilder.setSSLContext(sslContext);
 
-            // Provide credentials, tcpip request config to client config callback
-            final CredentialsProvider credentialsProvider = ConnectionUtils.getCredentialsProvider(connConfig);
+            // Set preemptive auth headers to avoid 401 → retry on every request
+            restClientBuilder.setDefaultHeaders(ConnectionUtils.getAuthHeaders(connConfig));
             restClientBuilder.setHttpClientConfigCallback(httpClientBuilder -> {
-                httpClientBuilder
-                        .setDefaultCredentialsProvider(credentialsProvider)
-                        .setIOReactorConfig(reactorConfig);
+                httpClientBuilder.setIOReactorConfig(reactorConfig);
             });
 
             // Disable hostname verification in dev mode
