@@ -21,7 +21,7 @@
     "report:html": "marge --inline results/reports/report.json --reportDir results/reports/"
   },
   "devDependencies": {
-    "@jahia/cypress": "^6.2.0",
+    "@jahia/cypress": "^8.7.0",
     "@jahia/eslint-config": "^2.1.2",
     "@jahia/jahia-reporter": "^1.6.0",
     "@types/node": "^22.18.5",
